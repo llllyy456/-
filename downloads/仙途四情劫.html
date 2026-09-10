@@ -1,0 +1,3137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>仙途</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height: 100%; }
+body {
+  font-family: "Noto Serif SC", "Songti SC", "STSong", "Microsoft YaHei", serif;
+  background: #050308;
+  color: #e8e0d0;
+  min-height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ==================== 背景层 ==================== */
+#bg-layer {
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 50% 20%, rgba(40, 30, 60, 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 30%, #1a1428 0%, #0a0a12 60%, #050508 100%);
+  z-index: 0;
+  transition: background 1.5s ease;
+}
+#bg-layer.chapter1 { 
+  background: 
+    radial-gradient(ellipse at 50% 20%, rgba(60, 100, 60, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 30%, #1a2a1a 0%, #0a1a0a 60%, #050a05 100%);
+}
+#bg-layer.chapter2 { 
+  background: 
+    radial-gradient(ellipse at 50% 20%, rgba(120, 50, 50, 0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 30%, #2a1a1a 0%, #1a0a0a 60%, #0a0505 100%);
+}
+#bg-layer.chapter3 { 
+  background: 
+    radial-gradient(ellipse at 50% 20%, rgba(120, 50, 120, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 30%, #2a1a2a 0%, #1a0a1a 60%, #0a050a 100%);
+}
+#bg-layer.chapter4 { 
+  background: 
+    radial-gradient(ellipse at 50% 20%, rgba(50, 80, 140, 0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 30%, #1a1a2a 0%, #0a0a1a 60%, #05050a 100%);
+}
+#bg-layer.chapter5 { 
+  background: 
+    radial-gradient(ellipse at 50% 20%, rgba(140, 120, 50, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 30%, #2a2a1a 0%, #1a1a0a 60%, #0a0a05 100%);
+}
+
+/* 飘落花瓣 */
+.petal {
+  position: fixed;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  font-size: 14px;
+  color: rgba(240, 200, 200, 0.5);
+  animation: petalFall 12s linear infinite;
+  text-shadow: 0 0 8px rgba(240, 180, 200, 0.4);
+}
+@keyframes petalFall {
+  0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.7; }
+  90% { opacity: 0.7; }
+  100% { transform: translateY(110vh) translateX(80px) rotate(360deg); opacity: 0; }
+}
+
+/* 星辰 */
+.star {
+  position: fixed;
+  width: 2px; height: 2px;
+  background: #fff;
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: twinkle 3s infinite;
+  z-index: 1;
+  box-shadow: 0 0 4px rgba(255,255,255,0.6);
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.1; transform: scale(0.8); }
+  50% { opacity: 0.8; transform: scale(1.2); }
+}
+
+/* ==================== 游戏主体 ==================== */
+#game {
+  position: relative;
+  z-index: 10;
+  max-width: 920px;
+  margin: 0 auto;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+}
+
+/* 状态栏 */
+#status-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 22px 14px;
+  background: linear-gradient(180deg, rgba(25, 18, 38, 0.88), rgba(15, 10, 25, 0.88));
+  border: 1px solid rgba(180, 150, 100, 0.3);
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  margin-bottom: 14px;
+  position: relative;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(220, 190, 130, 0.08);
+}
+#status-bar::before, #status-bar::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  background: #d0b080;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 0 8px rgba(208, 176, 128, 0.6);
+}
+#status-bar::before { left: 8px; }
+#status-bar::after { right: 8px; }
+
+/* 主线：修炼进度条区（顶部常驻） */
+.cult-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 4px 12px 0;
+}
+.cult-main .realm-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, rgba(200,170,110,0.18), rgba(160,130,80,0.08));
+  border: 1px solid rgba(220,190,130,0.4);
+  border-radius: 20px;
+  font-size: 13px;
+  color: #f0e0c0;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  box-shadow: 0 0 10px rgba(220,190,130,0.18);
+}
+.cult-main .realm-tag .rank {
+  font-size: 11px;
+  color: #a09070;
+  border-left: 1px solid rgba(200,170,110,0.35);
+  padding-left: 8px;
+  margin-left: 4px;
+  letter-spacing: 1px;
+}
+.cult-main .lingli-bar-wrap {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cult-main .lingli-bar {
+  flex: 1;
+  height: 12px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+  position: relative;
+}
+.cult-main .lingli-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #6090c0, #90c0e0, #b0e0f0);
+  border-radius: 6px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(144, 192, 224, 0.6);
+  position: relative;
+}
+.cult-main .lingli-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer 2.5s linear infinite;
+}
+.cult-main .lingli-text {
+  font-size: 12px;
+  color: #c0d0e0;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.cult-main .attr-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.cult-main .chip {
+  font-size: 11px;
+  color: #b0a888;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(180,150,100,0.2);
+  border-radius: 12px;
+  padding: 3px 9px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.cult-main .chip b { color: #f0e0c0; font-weight: 500; }
+
+/* 副线：好感度区（次要栏） */
+.cult-sub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0 12px;
+  border-top: 1px dashed rgba(180,150,100,0.18);
+  padding-top: 8px;
+}
+#chapter-title {
+  font-size: 13px;
+  color: #a09070;
+  letter-spacing: 3px;
+  font-weight: 500;
+  padding-left: 14px;
+  opacity: 0.85;
+}
+#affection-panel {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-right: 14px;
+}
+.aff-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  transition: transform 0.3s ease;
+  opacity: 0.92;
+}
+.aff-item:hover { transform: translateY(-2px); opacity: 1; }
+.aff-name {
+  color: #a09070;
+  letter-spacing: 1px;
+}
+.aff-bar {
+  width: 54px;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+  position: relative;
+}
+.aff-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 4px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: 0 0 6px currentColor;
+}
+.aff-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2.5s linear infinite;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+.aff-fill.shenhuaizhou { background: linear-gradient(90deg, #e8c8a0, #f0e0c0); color: #f0d0a0; }
+.aff-fill.lihanyuan { background: linear-gradient(90deg, #c04040, #e06060); color: #e06060; }
+.aff-fill.rongzhao { background: linear-gradient(90deg, #6090c0, #90c0e0); color: #90c0e0; }
+.aff-fill.muchangli { background: linear-gradient(90deg, #b090d0, #d0b0e0); color: #d0b0e0; }
+.aff-value {
+  color: #d0c0a0;
+  min-width: 22px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 文本区 */
+#text-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 36px 40px;
+  background: 
+    linear-gradient(180deg, rgba(20, 15, 32, 0.75), rgba(12, 8, 22, 0.75));
+  border: 1px solid rgba(180, 150, 100, 0.2);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  margin-bottom: 14px;
+  line-height: 2.1;
+  font-size: 16px;
+  scroll-behavior: smooth;
+  position: relative;
+  box-shadow: 
+    0 8px 32px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(220, 190, 130, 0.06);
+}
+/* 四角装饰 */
+#text-area::before, #text-area::after {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(200, 170, 110, 0.4);
+  pointer-events: none;
+}
+#text-area::before { top: 8px; left: 8px; border-right: none; border-bottom: none; }
+#text-area::after { bottom: 8px; right: 8px; border-left: none; border-top: none; }
+
+#text-area::-webkit-scrollbar { width: 6px; }
+#text-area::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
+#text-area::-webkit-scrollbar-thumb { 
+  background: linear-gradient(180deg, rgba(208, 176, 128, 0.5), rgba(160, 128, 80, 0.5));
+  border-radius: 3px; 
+}
+#text-area::-webkit-scrollbar-thumb:hover { 
+  background: linear-gradient(180deg, rgba(208, 176, 128, 0.7), rgba(160, 128, 80, 0.7));
+}
+
+.text-line {
+  margin-bottom: 18px;
+  animation: fadeIn 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); filter: blur(2px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+.narration { color: #b0a890; font-style: italic; }
+.dialogue { color: #e8e0d0; }
+.dialogue .speaker { 
+  color: #d0b080; 
+  font-weight: bold; 
+  margin-right: 10px;
+  text-shadow: 0 0 6px currentColor;
+}
+.dialogue.shenhuaizhou .speaker { color: #f0d0a0; }
+.dialogue.lihanyuan .speaker { color: #e06060; }
+.dialogue.rongzhao .speaker { color: #90c0e0; }
+.dialogue.muchangli .speaker { color: #d0b0e0; }
+.thought { color: #9080a0; font-style: italic; }
+.highlight { color: #f0d080; font-weight: bold; text-shadow: 0 0 8px rgba(240, 208, 128, 0.4); }
+
+/* 选项按钮 */
+#choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 10px;
+}
+.choice-btn {
+  padding: 16px 26px 16px 30px;
+  background: linear-gradient(90deg, rgba(25, 20, 40, 0.85), rgba(18, 14, 30, 0.85));
+  border: 1px solid rgba(180, 150, 100, 0.3);
+  border-radius: 10px;
+  color: #d8d0c0;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.7;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.5px;
+}
+.choice-btn::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #f0d080, #c0a060, #806030);
+  opacity: 0;
+  transition: opacity 0.3s;
+  box-shadow: 0 0 10px rgba(240, 208, 128, 0.5);
+}
+.choice-btn::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(240, 208, 128, 0.1), transparent);
+  transition: left 0.6s ease;
+}
+.choice-btn:hover {
+  background: linear-gradient(90deg, rgba(45, 35, 60, 0.95), rgba(30, 22, 45, 0.95));
+  border-color: rgba(240, 208, 128, 0.6);
+  color: #f0e8d8;
+  transform: translateX(8px);
+  box-shadow: 
+    0 6px 24px rgba(0,0,0,0.5),
+    0 0 20px rgba(180, 150, 100, 0.2);
+}
+.choice-btn:hover::before { opacity: 1; }
+.choice-btn:hover::after { left: 100%; }
+.choice-btn:active { transform: translateX(4px) scale(0.99); }
+
+/* ==================== 开始屏 ==================== */
+#start-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: 
+    radial-gradient(ellipse at 50% 40%, rgba(40, 30, 60, 0.4) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 40%, #1a1428 0%, #0a0a12 70%);
+  text-align: center;
+  padding: 20px;
+}
+#start-screen::before {
+  content: "";
+  position: absolute;
+  inset: 40px;
+  border: 1px solid rgba(180, 150, 100, 0.15);
+  border-radius: 8px;
+  pointer-events: none;
+}
+#start-screen::after {
+  content: "";
+  position: absolute;
+  inset: 46px;
+  border: 1px solid rgba(180, 150, 100, 0.08);
+  border-radius: 6px;
+  pointer-events: none;
+}
+#start-screen h1 {
+  font-size: clamp(40px, 9vw, 80px);
+  color: #e8d0a0;
+  letter-spacing: 16px;
+  margin-bottom: 16px;
+  text-shadow: 
+    0 0 40px rgba(220, 190, 130, 0.4),
+    0 0 80px rgba(220, 190, 130, 0.2);
+  font-weight: 400;
+  position: relative;
+  z-index: 1;
+  animation: titleGlow 4s ease-in-out infinite;
+}
+@keyframes titleGlow {
+  0%, 100% { text-shadow: 0 0 40px rgba(220, 190, 130, 0.4), 0 0 80px rgba(220, 190, 130, 0.2); }
+  50% { text-shadow: 0 0 50px rgba(240, 208, 128, 0.6), 0 0 100px rgba(220, 190, 130, 0.3); }
+}
+#start-screen .quote {
+  font-size: 15px;
+  color: #908070;
+  font-style: italic;
+  margin-bottom: 56px;
+  max-width: 500px;
+  line-height: 2.2;
+  position: relative;
+  z-index: 1;
+  letter-spacing: 2px;
+}
+#start-screen .quote::before, 
+#start-screen .quote::after {
+  display: block;
+  width: 60px;
+  height: 1px;
+  margin: 20px auto;
+  background: linear-gradient(90deg, transparent, rgba(180, 150, 100, 0.4), transparent);
+  content: "";
+}
+.start-btn {
+  padding: 16px 64px;
+  background: transparent;
+  border: 1px solid rgba(200, 170, 110, 0.5);
+  border-radius: 40px;
+  color: #e0d0b0;
+  font-family: inherit;
+  font-size: 18px;
+  letter-spacing: 8px;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+.start-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(240, 208, 128, 0.15), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.start-btn:hover {
+  background: rgba(200, 170, 110, 0.08);
+  border-color: rgba(240, 208, 128, 0.7);
+  box-shadow: 
+    0 0 30px rgba(200, 170, 110, 0.25),
+    inset 0 0 20px rgba(200, 170, 110, 0.1);
+  letter-spacing: 12px;
+  color: #f0e0c0;
+}
+.start-btn:hover::before { opacity: 1; }
+
+/* ==================== 结局屏 ==================== */
+#ending-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: 
+    radial-gradient(ellipse at 50% 40%, rgba(40, 30, 60, 0.4) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 40%, #1a1428 0%, #0a0a12 70%);
+  text-align: center;
+  padding: 50px 20px;
+  overflow-y: auto;
+}
+#ending-screen::before {
+  content: "";
+  position: absolute;
+  inset: 30px;
+  border: 1px solid rgba(180, 150, 100, 0.2);
+  border-radius: 8px;
+  pointer-events: none;
+}
+#ending-screen h2 {
+  font-size: clamp(30px, 6.5vw, 52px);
+  color: #e8d0a0;
+  letter-spacing: 10px;
+  margin-bottom: 36px;
+  text-shadow: 
+    0 0 30px rgba(220, 190, 130, 0.4),
+    0 0 60px rgba(220, 190, 130, 0.2);
+  font-weight: 400;
+  animation: titleGlow 4s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+#ending-screen .ending-text {
+  font-size: 16px;
+  color: #c0b8a8;
+  line-height: 2.3;
+  max-width: 620px;
+  margin-bottom: 44px;
+  text-align: left;
+  padding: 30px 36px;
+  background: rgba(15, 12, 25, 0.5);
+  border: 1px solid rgba(180, 150, 100, 0.15);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  position: relative;
+  z-index: 1;
+  box-shadow: inset 0 1px 0 rgba(220, 190, 130, 0.05);
+}
+#ending-screen .ending-text p { margin-bottom: 16px; }
+#ending-screen .ending-text p:last-child { margin-bottom: 0; }
+.restart-btn {
+  padding: 14px 54px;
+  background: transparent;
+  border: 1px solid rgba(200, 170, 110, 0.5);
+  border-radius: 40px;
+  color: #e0d0b0;
+  font-family: inherit;
+  font-size: 16px;
+  letter-spacing: 5px;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  position: relative;
+  z-index: 1;
+}
+.restart-btn:hover {
+  background: rgba(200, 170, 110, 0.1);
+  border-color: rgba(240, 208, 128, 0.7);
+  box-shadow: 
+    0 0 30px rgba(200, 170, 110, 0.25),
+    inset 0 0 20px rgba(200, 170, 110, 0.1);
+  color: #f0e0c0;
+  letter-spacing: 8px;
+}
+
+/* ==================== 好感度弹出 ==================== */
+.aff-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 14px 32px;
+  background: linear-gradient(135deg, rgba(25, 18, 38, 0.95), rgba(15, 10, 25, 0.95));
+  border: 1px solid rgba(240, 208, 128, 0.5);
+  border-radius: 30px;
+  color: #f0d080;
+  font-size: 16px;
+  letter-spacing: 2px;
+  z-index: 150;
+  animation: popupFade 2s ease forwards;
+  pointer-events: none;
+  box-shadow: 
+    0 0 30px rgba(240, 208, 128, 0.3),
+    inset 0 1px 0 rgba(240, 208, 128, 0.2);
+  text-shadow: 0 0 8px rgba(240, 208, 128, 0.5);
+}
+@keyframes popupFade {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -65%) scale(1); }
+}
+
+/* 名字输入框 */
+#name-input {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(200, 170, 110, 0.6) !important;
+  color: #f0d080 !important;
+  font-family: inherit !important;
+  font-size: 18px !important;
+  padding: 6px 10px !important;
+  outline: none !important;
+  width: 160px !important;
+  text-align: center !important;
+  letter-spacing: 2px;
+  text-shadow: 0 0 8px rgba(240, 208, 128, 0.3);
+  transition: all 0.3s;
+}
+#name-input:focus {
+  border-bottom-color: rgba(240, 208, 128, 0.9) !important;
+  box-shadow: 0 4px 12px -6px rgba(240, 208, 128, 0.5);
+}
+#name-input::placeholder { color: rgba(160, 144, 112, 0.5); }
+
+/* 修仙按钮 */
+#cult-btn {
+  padding: 6px 14px;
+  background: linear-gradient(135deg, rgba(40, 30, 60, 0.9), rgba(20, 14, 35, 0.9));
+  border: 1px solid rgba(200, 170, 110, 0.5);
+  border-radius: 20px;
+  color: #e0d0b0;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  letter-spacing: 2px;
+  margin-left: 8px;
+}
+#cult-btn:hover {
+  background: rgba(200, 170, 110, 0.15);
+  box-shadow: 0 0 16px rgba(200, 170, 110, 0.3);
+  color: #f0e0c0;
+}
+
+/* 修仙面板（角色玉牌） */
+#cult-panel {
+  position: absolute;
+  top: 70px;
+  right: 20px;
+  width: 290px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  padding: 18px 20px;
+  background: linear-gradient(160deg, rgba(25, 18, 38, 0.96), rgba(15, 10, 25, 0.96));
+  border: 1px solid rgba(200, 170, 110, 0.4);
+  border-radius: 12px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(220, 190, 130, 0.1);
+  z-index: 50;
+  animation: fadeIn 0.4s ease;
+}
+.cult-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.cult-row:last-child { margin-bottom: 0; }
+.cult-label {
+  color: #a09070;
+  min-width: 70px;
+  letter-spacing: 1px;
+}
+.cult-val {
+  color: #e8d0a0;
+  flex: 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.cult-bar {
+  flex: 1;
+  height: 7px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+}
+.cult-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #6090c0, #90c0e0);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+  box-shadow: 0 0 6px rgba(144, 192, 224, 0.5);
+}
+
+@media (max-width: 600px) {
+  #game { padding: 10px; }
+  #text-area { padding: 24px 22px; font-size: 15px; }
+  .choice-btn { padding: 14px 20px 14px 24px; font-size: 14px; }
+  #status-bar { padding: 10px 16px; }
+  .aff-bar { width: 44px; }
+  #chapter-title { font-size: 13px; letter-spacing: 2px; }
+  #start-screen h1 { letter-spacing: 10px; }
+  #ending-screen .ending-text { padding: 20px; font-size: 15px; }
+}
+
+/* ===== 开局捏人：药丸选择面板 ===== */
+.char-create {
+  padding: 16px 4px 8px;
+}
+.cc-section {
+  margin-bottom: 18px;
+}
+.cc-section-title {
+  font-size: 15px;
+  color: #e8d0a0;
+  letter-spacing: 3px;
+  margin-bottom: 10px;
+  padding-left: 4px;
+  border-left: 3px solid #c8a868;
+  padding-left: 10px;
+}
+.cc-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cc-pill {
+  padding: 7px 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(180,150,100,0.3);
+  border-radius: 20px;
+  color: #c0b090;
+  font-size: 13px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-family: inherit;
+}
+.cc-pill:hover {
+  border-color: rgba(220,190,130,0.6);
+  color: #f0e0c0;
+}
+.cc-pill.active {
+  background: linear-gradient(135deg, rgba(200,170,110,0.35), rgba(160,130,80,0.15));
+  border-color: #e0c088;
+  color: #fff5e0;
+  box-shadow: 0 0 10px rgba(220,190,130,0.35);
+}
+.cc-pill .cc-speed {
+  font-size: 10px;
+  color: #a09070;
+  margin-left: 4px;
+}
+.cc-pill.active .cc-speed { color: #f0d8a8; }
+.cc-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.cc-name-row input {
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(180,150,100,0.3);
+  border-radius: 20px;
+  color: #f0e0c0;
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: 1px;
+  outline: none;
+}
+.cc-name-row input:focus { border-color: #e0c088; }
+.cc-reroll {
+  padding: 7px 16px;
+  background: transparent;
+  border: 1px dashed rgba(180,150,100,0.4);
+  border-radius: 20px;
+  color: #c0b090;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.cc-reroll:hover {
+  border-color: #e0c088;
+  color: #f0e0c0;
+}
+.cc-constit-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: linear-gradient(135deg, rgba(180,140,200,0.25), rgba(140,100,160,0.12));
+  border: 1px solid rgba(200,160,220,0.45);
+  border-radius: 20px;
+  color: #f0d8f0;
+  font-size: 13px;
+  letter-spacing: 1px;
+  cursor: default;
+  box-shadow: 0 0 8px rgba(200,160,220,0.2);
+}
+.cc-constit-tag .cc-cn {
+  font-size: 10px;
+  color: #d8c0d8;
+}
+.cc-start-btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  background: linear-gradient(135deg, #c8a868, #a88848);
+  border: none;
+  border-radius: 12px;
+  color: #1a1208;
+  font-family: inherit;
+  font-size: 17px;
+  letter-spacing: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(200,168,104,0.4);
+  transition: all 0.3s ease;
+}
+.cc-start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(200,168,104,0.55);
+}
+.cc-tip {
+  font-size: 11px;
+  color: #807060;
+  margin-top: 6px;
+  letter-spacing: 1px;
+}
+</style>
+</head>
+<body>
+
+<div id="bg-layer"></div>
+
+<div id="start-screen">
+  <h1>仙途</h1>
+  <div class="quote">
+    正道非正，魔道非恶。<br>
+    妖亦有情，仙亦有私。<br>
+    你，会选谁？
+  </div>
+  <button class="start-btn" onclick="startGame()">开 始</button>
+</div>
+
+<div id="game" style="display:none;">
+  <div id="status-bar">
+    <!-- 主线：修炼进度条与基础属性（顶部常驻） -->
+    <div class="cult-main">
+      <span class="realm-tag">
+        <span id="bar-realm">练气一层</span>
+        <span class="rank" id="bar-rank">杂役弟子</span>
+      </span>
+      <div class="lingli-bar-wrap">
+        <div class="lingli-bar"><div class="lingli-fill" id="bar-lingli-fill"></div></div>
+        <span class="lingli-text" id="bar-lingli-text">0/100</span>
+      </div>
+      <div class="attr-chips">
+        <span class="chip">灵根 <b id="bar-linggen">五灵根</b></span>
+        <span class="chip">主修 <b id="bar-maincult">法修</b></span>
+        <span class="chip">剑法 <b id="bar-sword">入门</b></span>
+        <span class="chip">骨龄 <b id="bar-boneage">14</b></span>
+        <span class="chip">寿元 <b id="bar-lifespan">120</b></span>
+        <span class="chip">行动 <b id="bar-free">1</b></span>
+      </div>
+      <button id="cult-btn" onclick="toggleCultPanel()">详</button>
+    </div>
+    <!-- 副线：好感度（恋爱支线，次要栏） -->
+    <div class="cult-sub">
+      <div id="chapter-title">仙途·初入昆仑</div>
+      <div id="affection-panel">
+        <div class="aff-item">
+          <span class="aff-name">怀舟</span>
+          <div class="aff-bar"><div class="aff-fill shenhuaizhou" id="aff-shenhuaizhou"></div></div>
+          <span class="aff-value" id="val-shenhuaizhou">0</span>
+        </div>
+        <div class="aff-item">
+          <span class="aff-name">寒渊</span>
+          <div class="aff-bar"><div class="aff-fill lihanyuan" id="aff-lihanyuan"></div></div>
+          <span class="aff-value" id="val-lihanyuan">0</span>
+        </div>
+        <div class="aff-item">
+          <span class="aff-name">容昭</span>
+          <div class="aff-bar"><div class="aff-fill rongzhao" id="aff-rongzhao"></div></div>
+          <span class="aff-value" id="val-rongzhao">0</span>
+        </div>
+        <div class="aff-item">
+          <span class="aff-name">长离</span>
+          <div class="aff-bar"><div class="aff-fill muchangli" id="aff-muchangli"></div></div>
+          <span class="aff-value" id="val-muchangli">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 修仙面板（角色玉牌） -->
+  <div id="cult-panel" style="display:none;">
+    <div class="cult-row"><span class="cult-label">灵根</span><span class="cult-val" id="cult-linggen">五灵根</span></div>
+    <div class="cult-row"><span class="cult-label">道向</span><span class="cult-val" id="cult-daopath">凡尘道</span></div>
+    <div class="cult-row"><span class="cult-label">主修</span><span class="cult-val" id="cult-maincult">法修</span></div>
+    <div class="cult-row"><span class="cult-label">辅修</span><span class="cult-val" id="cult-subcult">采药</span></div>
+    <div class="cult-row"><span class="cult-label">出身</span><span class="cult-val" id="cult-origin">凡人孤女</span></div>
+    <div class="cult-row"><span class="cult-label">弟子等级</span><span class="cult-val" id="cult-rank">杂役弟子</span></div>
+    <div class="cult-row"><span class="cult-label">境界</span><span class="cult-val" id="cult-realm">练气一层</span></div>
+    <div class="cult-row">
+      <span class="cult-label">灵力</span>
+      <div class="cult-bar"><div class="cult-fill" id="cult-lingli-bar"></div></div>
+      <span class="cult-val" id="cult-lingli">0/100</span>
+    </div>
+    <div class="cult-row"><span class="cult-label">剑法</span><span class="cult-val" id="cult-sword">入门（0）</span></div>
+    <div class="cult-row"><span class="cult-label">骨龄</span><span class="cult-val" id="cult-boneage">14</span></div>
+    <div class="cult-row"><span class="cult-label">寿元</span><span class="cult-val" id="cult-lifespan">120 年</span></div>
+    <div class="cult-row"><span class="cult-label">修为</span><span class="cult-val" id="cult-years">0 年</span></div>
+    <div class="cult-row"><span class="cult-label">本命法宝</span><span class="cult-val" id="cult-weapon">未得</span></div>
+    <div class="cult-row"><span class="cult-label">杀手锏</span><span class="cult-val" id="cult-killer">未觉</span></div>
+    <div class="cult-row"><span class="cult-label">弱点</span><span class="cult-val" id="cult-weakness">凡躯</span></div>
+    <div class="cult-row" style="align-items:flex-start;"><span class="cult-label">特殊体质</span><span class="cult-val" id="cult-constitutions" style="line-height:1.6;">未觉</span></div>
+    <div class="cult-row"><span class="cult-label">自由行动</span><span class="cult-val" id="cult-free">1</span></div>
+  </div>
+  
+  <div id="text-area"></div>
+  <div id="choices"></div>
+</div>
+
+<div id="ending-screen">
+  <h2 id="ending-title"></h2>
+  <div class="ending-text" id="ending-text"></div>
+  <button class="restart-btn" onclick="restartGame()">重 新 开 始</button>
+</div>
+
+<script>
+// ==================== 游戏状态 ====================
+let state = {
+  affection: { shenhuaizhou: 0, lihanyuan: 0, rongzhao: 0, muchangli: 0 },
+  flags: {},
+  chapter: 1,
+  playerName: '',
+  // 身份（开局选定）
+  linggen: '五灵根',     // 灵根
+  daoPath: '凡尘道',     // 修道方向
+  mainCult: '法修',      // 主修方向
+  subCult: '采药',       // 辅修
+  origin: '凡人孤女',    // 出身背景
+  constitutions: [],     // 特殊体质（随机3个）
+  // 身份卡：斗法设定
+  weapon: '未得',        // 本命法宝
+  killer: '未觉',        // 杀手锏
+  weakness: '凡躯',      // 弱点
+  // 修仙属性
+  cultivation: {
+    boneAge: 14,            // 真实骨龄
+    appearAge: 14,          // 外表年龄
+    lifespan: 120,          // 当前寿元（大限）
+    realm: '练气一层',     // 境界
+    realmLevel: 1,          // 境界等级（1-17：练气1-9/筑基/金丹/元婴/渡劫/大乘/飞升）
+    discipleRank: '杂役弟子', // 宗门弟子等级
+    lingli: 0,              // 灵力值
+    lingliMax: 100,         // 当前境界灵力上限
+    swordArt: 0,            // 剑法熟练度
+    swordArtLevel: '入门',  // 剑法境界
+    years: 0,               // 修为年数
+    freeActions: 1          // 剩余自由行动次数
+  }
+};
+
+// ==================== 身份加成表 ====================
+// 灵根体系（按修炼速度从快到慢排列）
+const LINGGEN_BONUS = {
+  '混沌灵根': { lingliMul: 1.95, lingliMaxMul: 1.50, swordStart: 0,  lingliStart: 50, life: 120, speed: '极致', note: '万劫无一。混沌之气与天地同源，吸纳灵气如鲸吞海。然因果缠身，必招天劫。' },
+  '天灵根':   { lingliMul: 1.70, lingliMaxMul: 1.30, swordStart: 0,  lingliStart: 35, life: 80,  speed: '极快', note: '单一属性纯粹无杂。结丹前无瓶颈，绝世天才，各大宗门抢破头。然资质太显，易招祸端。' },
+  '雷灵根':   { lingliMul: 1.60, lingliMaxMul: 1.22, swordStart: 0,  lingliStart: 28, life: 60,  speed: '极快', note: '火金异变。修速冠绝三界，攻伐之力极强，然雷气狂暴，稍不留神便走火。' },
+  '冰灵根':   { lingliMul: 1.55, lingliMaxMul: 1.20, swordStart: 0,  lingliStart: 26, life: 55,  speed: '极快', note: '水之异变。修速极快，冰封万里，然心性易冷，与魔修共鸣。' },
+  '风灵根':   { lingliMul: 1.50, lingliMaxMul: 1.18, swordStart: 0,  lingliStart: 24, life: 50,  speed: '极快', note: '木之异变。身法无双，攻守随心，然灵气偏轻，根基欠稳。' },
+  '双灵根':   { lingliMul: 1.05, lingliMaxMul: 1.00, swordStart: 0,  lingliStart: 12, life: 10,  speed: '中等', note: '两种灵根并存。中庸之姿，胜在平稳，少有瓶颈。' },
+  '三灵根':   { lingliMul: 0.90, lingliMaxMul: 0.98, swordStart: 0,  lingliStart: 8,  life: 0,   speed: '偏慢', note: '三种属性。修速偏慢，然五行渐全，可走博采众长之路。' },
+  '四灵根':   { lingliMul: 0.75, lingliMaxMul: 0.92, swordStart: 0,  lingliStart: 4,  life: -5,  speed: '偏慢', note: '四种属性。修速龟爬，多为底层杂役。然根基反稳，少有走火之虞。' },
+  '五灵根':   { lingliMul: 0.55, lingliMaxMul: 0.85, swordStart: 5,  lingliStart: 0,  life: -10, speed: '极慢', note: '五行俱全，无一精通。仙道废材，然认真者或可另辟蹊径，以全五行证道。' }
+};
+
+// 修道方向：起手好感加成 / 寿元加成 / 描述
+const DAOPATH_BONUS = {
+  '无情道':   { aff: { rongzhao: 6 }, life: 30,  note: '太上忘情，断情绝欲。容昭之冷，与你相契。寿元绵长，然心渐冷。' },
+  '逍遥道':   { aff: { muchangli: 6 }, life: 20,  note: '随心所欲，不羁于世。慕长离之姿，与你同路。寿元有损亦无悔。' },
+  '苍生道':   { aff: { shenhuaizhou: 6 }, life: 10, note: '心怀众生，温润如玉。沈怀舟之伪，与你同形。渡人渡己，寿元有赠。' },
+  '多情道':   { aff: { shenhuaizhou: 3, lihanyuan: 3, rongzhao: 3, muchangli: 3 }, life: -20, note: '一念多情，难舍难断。你与四人皆有牵缠之缘。情多伤寿，多情反薄命。' },
+  '杀戮道':   { aff: { lihanyuan: 6 }, life: -10, note: '以杀证道，剑出无悔。厉寒渊之血，与你同源。杀伐过重，寿元有损。' },
+  '凡尘道':   { aff: {}, life: 0, note: '不入大道，只问本心。无加成，亦无束缚。' }
+};
+
+// 主修方向：剑法倍率 / 灵力倍率 / 起手剑法 / 起手灵力 / 文案
+const MAINCULT_BONUS = {
+  '剑修': { swordMul: 1.60, lingliMul: 0.95, swordStart: 15, lingliStart: 0,  note: '以剑入道。攻伐之冠，灵力略缓。' },
+  '枪修': { swordMul: 1.50, lingliMul: 1.00, swordStart: 12, lingliStart: 0,  note: '一枪破万法。攻守均衡，势大力沉。' },
+  '刀修': { swordMul: 1.55, lingliMul: 0.95, swordStart: 14, lingliStart: 0,  note: '一刀两断。杀伐之气重，灵力偏弱。' },
+  '器修': { swordMul: 0.90, lingliMul: 1.10, swordStart: 0,  lingliStart: 10, note: '炼器入道。可自造法器，战力依赖装备。' },
+  '体修': { swordMul: 1.20, lingliMul: 0.85, swordStart: 8,  lingliStart: 0,  note: '以体为炉。近身搏杀冠绝同阶，灵力最弱。' },
+  '蛊修': { swordMul: 1.00, lingliMul: 1.00, swordStart: 0,  lingliStart: 12, note: '驭蛊为战。诡异难防，为正道所忌。' },
+  '毒修': { swordMul: 1.10, lingliMul: 1.00, swordStart: 0,  lingliStart: 10, note: '以毒入道。一击毙命，然易招人恨。' },
+  '丹修': { swordMul: 0.80, lingliMul: 1.10, swordStart: 0,  lingliStart: 10, note: '以丹养道。可自调气血，余力行辅修。' },
+  '医修': { swordMul: 0.70, lingliMul: 1.15, swordStart: 0,  lingliStart: 15, note: '起死回生。战力平平，然最受追捧。' },
+  '音修': { swordMul: 1.00, lingliMul: 1.20, swordStart: 0,  lingliStart: 12, note: '音波为刃。攻伐无形，灵力深厚。' },
+  '阵修': { swordMul: 0.85, lingliMul: 1.15, swordStart: 0,  lingliStart: 12, note: '以阵困敌。借天地之力，以弱胜强。' },
+  '符修': { swordMul: 0.85, lingliMul: 1.10, swordStart: 0,  lingliStart: 10, note: '符箓为兵。临战可暴发，然耗财甚巨。' },
+  '法修': { swordMul: 0.85, lingliMul: 1.35, swordStart: 0,  lingliStart: 20, note: '以法为基。灵力最深厚，剑法平平。' },
+  '兽修': { swordMul: 0.90, lingliMul: 1.05, swordStart: 0,  lingliStart: 8,  note: '驭兽为战。人兽合力，攻守兼备。' }
+};
+
+// 辅修/生活职业
+const SUBCULT_DESC = {
+  '采药': '识得百草，可于后山寻得珍稀药草换取灵石。',
+  '炼器': '粗通炉火，可修补法器，闲暇接外门炼器订单。',
+  '制符': '会画几张基础符箓，临战可应急。',
+  '驯兽': '懂得安抚灵兽，御兽派弟子另眼相看。',
+  '铭文': '能在法器上铭刻基础阵纹，提升品阶。',
+  '炼丹': '粗识丹方，可自炼低阶丹药。'
+};
+
+// 出身背景（影响起手资源/骨龄/部分剧情）
+const ORIGIN_BONUS = {
+  '凡人孤女':   { boneAge: 14, lifespan: 100, extraLingli: 0,  note: '凡间孤女，被执事顺手带回。无依无靠，亦无牵挂。' },
+  '世家贵女':   { boneAge: 16, lifespan: 130, extraLingli: 12, note: '修真世家之女，自幼熏陶，根基扎实。' },
+  '宗门弃徒':   { boneAge: 22, lifespan: 90,  extraLingli: 25, note: '曾为别宗内门，因故被逐。骨龄偏长，根基却深。' },
+  '散修传人':   { boneAge: 18, lifespan: 110, extraLingli: 5,  note: '师承山野散修，入门虽晚，见识却广。' },
+  '妖域遗孤':   { boneAge: 15, lifespan: 140, extraLingli: 8,  note: '流落人界的妖族血脉。寿元绵长，妖气隐隐。' },
+  '魔门余孽':   { boneAge: 17, lifespan: 115, extraLingli: 15, note: '魔门覆灭后的遗孤。身具魔气，为正道所忌。' }
+};
+
+// ==================== 特殊体质池 ====================
+// 随机抽取3个，每个提供加成。key为体质名
+const CONSTITUTION_POOL = {
+  '先天道体':   { lingliMul: 1.10, life: 50,  note: '与天道相合，灵力吸纳额外+10%，寿元+50。' },
+  '太上忘情体': { lingliMul: 1.05, life: 80,  aff: { rongzhao: 8 }, note: '天生无情，容昭倍感相契。灵力+5%，寿元+80。' },
+  '先天剑骨':   { swordMul: 1.15, note: '骨骼天生契合剑道，剑法熟练度额外+15%。' },
+  '灵犀宝体':   { lingliMul: 1.08, lingliMaxMul: 1.08, note: '灵力上限与吸纳双+8%。' },
+  '媚骨天成':   { aff: { shenhuaizhou: 5, lihanyuan: 5, muchangli: 5 }, note: '天生妩媚，四男主皆对你多一分留意。' },
+  '九阴绝脉':   { lingliMul: 1.20, life: -30, note: '纯阴之体，灵力吸纳+20%，然寿元-30，需阴阳调和。' },
+  '九阳圣体':   { swordMul: 1.10, lingliMul: 1.10, life: 30, note: '纯阳之体，灵力剑法双+10%，寿元+30。' },
+  '五行灵体':   { lingliMaxMul: 1.12, note: '五行俱全且皆能御使，灵力上限+12%。' },
+  '万古魔躯':   { swordMul: 1.12, lingliMul: 1.08, life: 40, aff: { lihanyuan: 6 }, note: '上古魔躯，厉寒渊与你同源。剑法+12%，灵力+8%。' },
+  '天妖血脉':   { lingliMul: 1.06, life: 60, aff: { muchangli: 8 }, note: '妖族血脉潜藏。慕长离与你同类。灵力+6%，寿元+60。' },
+  '元灵体':     { lingliMul: 1.12, lingliStart: 15, note: '灵元自天生，起手灵力+15，吸纳+12%。' },
+  '清心琉璃体': { lingliMul: 1.05, note: '心若琉璃，难走火入魔。灵力+5%，修炼稳如磐石。' },
+  '玄阴之体':   { lingliMul: 1.10, aff: { rongzhao: 5, shenhuaizhou: 3 }, note: '玄阴之气浓郁。容昭与沈怀舟皆受吸引。灵力+10%。' },
+  '吞天魔体':   { lingliMul: 1.15, swordMul: 1.05, life: -20, note: '可吞纳灵气为己用，灵力+15%剑法+5%，然寿元-20。' },
+  '至尊骨':     { swordMul: 1.20, lingliMul: 1.05, note: '骨中藏至尊印记，剑法+20%，灵力+5%。同辈难逢敌手。' },
+  '百世轮回体': { life: 100, note: '累世修行之体。寿元+100，冥冥中似有前世记忆。' },
+  '时空之体':   { lingliMul: 1.08, lingliMaxMul: 1.05, note: '身具时空碎片，灵力+8%上限+5%。' },
+  '万毒不侵体': { note: '百毒不侵，于毒修蛊修面前有天然优势。' }
+};
+
+// 随机抽取N个不重复的特殊体质
+function rollConstitutions(n) {
+  const names = Object.keys(CONSTITUTION_POOL);
+  const result = [];
+  const pool = names.slice();
+  for (let i = 0; i < n && pool.length > 0; i++) {
+    const idx = Math.floor(Math.random() * pool.length);
+    result.push(pool[idx]);
+    pool.splice(idx, 1);
+  }
+  return result;
+}
+
+// 计算特殊体质总加成
+function getConstitutionBonus() {
+  const total = { lingliMul: 1, lingliMaxMul: 1, swordMul: 1, life: 0, lingliStart: 0, aff: {} };
+  state.constitutions.forEach(name => {
+    const c = CONSTITUTION_POOL[name];
+    if (!c) return;
+    total.lingliMul *= (c.lingliMul || 1);
+    total.lingliMaxMul *= (c.lingliMaxMul || 1);
+    total.swordMul *= (c.swordMul || 1);
+    total.life += (c.life || 0);
+    total.lingliStart += (c.lingliStart || 0);
+    if (c.aff) {
+      for (const k in c.aff) total.aff[k] = (total.aff[k] || 0) + c.aff[k];
+    }
+  });
+  return total;
+}
+
+// 计算当前身份下的最终灵力倍率（灵根 × 主修 × 体质）
+function getLingliMultiplier() {
+  const lg = LINGGEN_BONUS[state.linggen] || LINGGEN_BONUS['五灵根'];
+  const mc = MAINCULT_BONUS[state.mainCult] || MAINCULT_BONUS['法修'];
+  const ct = getConstitutionBonus();
+  return (lg.lingliMul || 1) * (mc.lingliMul || 1) * ct.lingliMul;
+}
+function getSwordMultiplier() {
+  const mc = MAINCULT_BONUS[state.mainCult] || MAINCULT_BONUS['法修'];
+  const ct = getConstitutionBonus();
+  return (mc.swordMul || 1) * ct.swordMul;
+}
+// 灵力上限倍率（灵根 × 体质）
+function getLingliMaxMultiplier() {
+  const lg = LINGGEN_BONUS[state.linggen] || LINGGEN_BONUS['五灵根'];
+  const ct = getConstitutionBonus();
+  return (lg.lingliMaxMul || 1) * ct.lingliMaxMul;
+}
+
+// 境界名称表（1-17：练气1-9 / 筑基 / 金丹 / 元婴 / 渡劫 / 大乘 / 飞升）
+const REALM_NAMES = [
+  '练气一层','练气二层','练气三层','练气四层','练气五层','练气六层',
+  '练气七层','练气八层','练气九层',
+  '筑基期','金丹期','元婴期','渡劫期','大乘期','飞升期'
+];
+const REALM_LINGLI_MAX = [100,150,200,260,330,410,500,600,720, 1000,1500,2500,4200,6800,12000];
+const SWORD_LEVELS = ['入门','熟练','小成','大成','剑意初显','剑心通明'];
+
+// 宗门弟子等级判定（依据境界）
+// 杂役弟子/外门弟子/内门弟子/真传弟子/太上长老
+function rankByRealm(realmLevel) {
+  if (realmLevel >= 15) return '太上长老';
+  if (realmLevel >= 13) return '真传弟子';
+  if (realmLevel >= 10) return '内门弟子';
+  if (realmLevel >= 5)  return '外门弟子';
+  return '杂役弟子';
+}
+// 寿元基础（随境界增长）
+function lifespanByRealm(realmLevel, base) {
+  // 筑基+200，金丹+500，元婴+1000，渡劫+3000，大乘+8000，飞升无尽
+  const bonus = [0,0,0,0,0,0,0,0,0, 200,500,1000,3000,8000,99999];
+  return base + bonus[realmLevel - 1];
+}
+
+// ==================== 好感度显示 ====================
+function updateAffectionUI() {
+  const names = ['shenhuaizhou', 'lihanyuan', 'rongzhao', 'muchangli'];
+  names.forEach(n => {
+    const val = state.affection[n];
+    document.getElementById('aff-' + n).style.width = Math.min(val, 100) + '%';
+    document.getElementById('val-' + n).textContent = val;
+  });
+}
+
+function changeAffection(name, amount) {
+  const before = state.affection[name];
+  state.affection[name] = Math.max(0, Math.min(100, state.affection[name] + amount));
+  const actual = state.affection[name] - before;
+  updateAffectionUI();
+  if (actual > 0) {
+    const labels = { shenhuaizhou: '沈怀舟', lihanyuan: '厉寒渊', rongzhao: '容昭', muchangli: '慕长离' };
+    showAffPopup(labels[name] + ' 好感 +' + actual);
+  }
+}
+
+// ==================== 修仙属性 ====================
+// 当前境界灵力上限（受灵根倍率影响）
+function curLingliMax() {
+  const base = REALM_LINGLI_MAX[state.cultivation.realmLevel - 1];
+  return Math.round(base * getLingliMaxMultiplier());
+}
+
+function addLingli(amount) {
+  const c = state.cultivation;
+  // 应用灵根 × 主修倍率
+  const actual = Math.max(1, Math.round(amount * getLingliMultiplier()));
+  const before = c.lingli;
+  c.lingli = Math.min(c.lingliMax, c.lingli + actual);
+  const gained = c.lingli - before;
+  if (gained > 0) showAffPopup('灵力 +' + gained);
+  checkBreakthrough();
+  updateCultPanel();
+}
+
+function addSwordArt(amount) {
+  const c = state.cultivation;
+  const actual = Math.max(1, Math.round(amount * getSwordMultiplier()));
+  c.swordArt += actual;
+  // 剑法境界：每50熟练度提升一级
+  const newLevel = Math.min(5, Math.floor(c.swordArt / 50));
+  if (newLevel > SWORD_LEVELS.indexOf(c.swordArtLevel)) {
+    c.swordArtLevel = SWORD_LEVELS[newLevel];
+    showAffPopup('剑法突破：' + c.swordArtLevel);
+  }
+  showAffPopup('剑法 +' + actual);
+  updateCultPanel();
+}
+
+function addYears(amount) {
+  const c = state.cultivation;
+  c.years += amount;
+  // 骨龄随修为增长（外表年龄不变，除非突破筑基期可驻颜）
+  c.boneAge += amount;
+  // 寿元随修为流逝
+  c.lifespan -= amount;
+  if (c.lifespan <= 0) {
+    c.lifespan = 0;
+    // 寿元耗尽：触发大限结局（保留处理，后续可扩展）
+    showAffPopup('寿元将尽！');
+  }
+  updateCultPanel();
+}
+
+function checkBreakthrough() {
+  const c = state.cultivation;
+  // 灵力满则突破
+  while (c.lingli >= c.lingliMax && c.realmLevel < REALM_NAMES.length) {
+    c.lingli -= c.lingliMax;
+    c.realmLevel++;
+    c.realm = REALM_NAMES[c.realmLevel - 1];
+    c.lingliMax = curLingliMax();
+    // 寿元随境界提升
+    c.lifespan = lifespanByRealm(c.realmLevel, c.lifespan);
+    // 弟子等级重判
+    c.discipleRank = rankByRealm(c.realmLevel);
+    showAffPopup('境界突破：' + c.realm + '！');
+    showAffPopup('弟子等级：' + c.discipleRank);
+    // 突破奖励：行动点+1
+    c.freeActions = Math.min(5, c.freeActions + 1);
+    // 境界里程碑叙事（主线感）
+    const milestone = {
+      2: '你隐隐感到丹田之中灵力又凝实了一分——练气二层。',
+      5: '灵气在经脉中已能自如流转，你正式晋升为外门弟子。',
+      9: '练气九层，瓶颈如山。你咬牙苦撑，灵力终于凝成一线——',
+      10: '筑基成功！你以自身为炉，铸就道基。从此寿元两百，驻颜不老，晋升内门弟子。',
+      11: '金丹结成，金光满室。你已为宗门中坚，名震一峰。',
+      12: '元婴出窍！你神识可离体而行，三界之门，向你半开。',
+      13: '渡劫！九重雷劫滚滚而下，你以道心硬扛。',
+      14: '大乘！你已是人间少有的高手，举手投足皆能引动天地。',
+      15: '飞升！云海翻涌，仙音隐隐。你踏入仙途之巅——'
+    };
+    if (milestone[c.realmLevel]) {
+      setTimeout(() => addNarration('【修炼里程碑】' + milestone[c.realmLevel]), 600);
+    }
+    // 筑基期及以上：外表年龄驻颜
+    if (c.realmLevel >= 10) {
+      c.appearAge = c.appearAge; // 保持不变
+    }
+  }
+}
+
+// 幕间发放行动点（每幕开始时补充）
+function grantActionPoints(n) {
+  const c = state.cultivation;
+  c.freeActions = Math.min(5, Math.max(c.freeActions, n));
+  updateTopBar();
+}
+
+// 应用开局身份加成（在身份确认时调用）
+function applyIdentityBonus() {
+  const c = state.cultivation;
+  const lg = LINGGEN_BONUS[state.linggen] || LINGGEN_BONUS['五灵根'];
+  const mc = MAINCULT_BONUS[state.mainCult] || MAINCULT_BONUS['法修'];
+  const dp = DAOPATH_BONUS[state.daoPath] || DAOPATH_BONUS['凡尘道'];
+  const og = ORIGIN_BONUS[state.origin] || ORIGIN_BONUS['凡人孤女'];
+  const ct = getConstitutionBonus();
+
+  // 出身影响骨龄/寿元（体质也影响寿元）
+  c.boneAge = og.boneAge;
+  c.appearAge = og.boneAge;
+  c.lifespan = og.lifespan + (lg.life || 0) + (dp.life || 0) + ct.life;
+
+  // 起手灵力 / 剑法（含出身额外灵力 + 体质起手灵力）
+  c.swordArt += (lg.swordStart || 0) + (mc.swordStart || 0);
+  c.lingli = Math.min(c.lingliMax, c.lingli + (lg.lingliStart || 0) + (mc.lingliStart || 0) + (og.extraLingli || 0) + ct.lingliStart);
+  // 灵力上限按（灵根 × 体质）倍率重算
+  c.lingliMax = curLingliMax();
+  c.lingli = Math.min(c.lingli, c.lingliMax);
+
+  // 弟子等级判定（按当前境界）
+  c.discipleRank = rankByRealm(c.realmLevel);
+
+  // 修道方向起手好感
+  for (const k in (dp.aff || {})) {
+    state.affection[k] = (state.affection[k] || 0) + dp.aff[k];
+  }
+  // 特殊体质好感加成
+  for (const k in ct.aff) {
+    state.affection[k] = (state.affection[k] || 0) + ct.aff[k];
+  }
+
+  // 重新校验剑法境界
+  const newLevel = Math.min(5, Math.floor(c.swordArt / 50));
+  c.swordArtLevel = SWORD_LEVELS[newLevel];
+
+  // 主修/辅修赋予的本命法宝/杀手锏/弱点（基础）
+  applyCultEquipment();
+
+  checkBreakthrough();
+  updateAffectionUI();
+  updateCultPanel();
+}
+
+// 根据主修赋予起手法器/杀手锏/弱点
+function applyCultEquipment() {
+  const weaponMap = {
+    '剑修': '一柄无名铁剑', '枪修': '一杆断缨长枪', '刀修': '一口锈迹斑斑的刀',
+    '器修': '一具半成品炼器炉', '体修': '一双铁木护腕', '蛊修': '一只铜蛊匣',
+    '毒修': '一把淬毒短匕', '丹修': '一只药庐小鼎', '医修': '一卷银针医囊',
+    '音修': '一张七弦断琴', '阵修': '半块阵盘残片', '符修': '一沓空白黄符',
+    '法修': '半卷残破法诀', '兽修': '一只雏雀灵宠'
+  };
+  const killerMap = {
+    '剑修': '濒死可激剑意一线', '枪修': '一枪化影，连刺九枪', '刀修': '燃血一刀，势不可挡',
+    '器修': '爆器一击，玉石俱焚', '体修': '燃血暴增三息之力', '蛊修': '放蛊反噬，同归于尽',
+    '毒修': '怀中藏绝毒一囊', '丹修': '一枚禁丹暴增修为', '医修': '一针封脉，瞬息回春',
+    '音修': '一曲断魂，伤敌亦自伤', '阵修': '临时布绝杀阵', '符修': '一张本命爆符',
+    '法修': '残诀可发一记禁咒', '兽修': '雏雀化形一瞬护主'
+  };
+  const weaknessMap = {
+    '剑修': '剑出无悔，易伤难愈', '枪修': '枪长失其近', '刀修': '戾气过重，易走火',
+    '器修': '无器则战力大减', '体修': '远攻之法拙劣', '蛊修': '蛊虫反噬自身',
+    '毒修': '百毒亦侵己身', '丹修': '临阵反击之力不足', '医修': '攻伐之力孱弱',
+    '音修': '琴毁则神伤', '阵修': '无阵则束手', '符修': '无符则无以为战',
+    '法修': '近身搏杀之力孱弱', '兽修': '灵兽失则心神俱碎'
+  };
+  state.weapon = weaponMap[state.mainCult] || '未得';
+  state.killer = killerMap[state.mainCult] || '未觉';
+  state.weakness = weaknessMap[state.mainCult] || '凡躯';
+}
+
+function updateCultPanel() {
+  const c = state.cultivation;
+  document.getElementById('cult-realm').textContent = c.realm;
+  document.getElementById('cult-lingli').textContent = c.lingli + '/' + c.lingliMax;
+  document.getElementById('cult-lingli-bar').style.width = (c.lingli / c.lingliMax * 100) + '%';
+  document.getElementById('cult-sword').textContent = c.swordArtLevel + '（' + c.swordArt + '）';
+  document.getElementById('cult-years').textContent = c.years + ' 年';
+  document.getElementById('cult-free').textContent = c.freeActions;
+  document.getElementById('cult-linggen').textContent = state.linggen;
+  document.getElementById('cult-daopath').textContent = state.daoPath;
+  document.getElementById('cult-maincult').textContent = state.mainCult;
+  document.getElementById('cult-subcult').textContent = state.subCult;
+  document.getElementById('cult-origin').textContent = state.origin;
+  document.getElementById('cult-rank').textContent = c.discipleRank;
+  document.getElementById('cult-boneage').textContent = c.boneAge + ' 岁（表 ' + c.appearAge + '）';
+  document.getElementById('cult-lifespan').textContent = (c.lifespan >= 99999 ? '无尽' : c.lifespan + ' 年');
+  document.getElementById('cult-weapon').textContent = state.weapon;
+  document.getElementById('cult-killer').textContent = state.killer;
+  document.getElementById('cult-weakness').textContent = state.weakness;
+  document.getElementById('cult-constitutions').innerHTML =
+    (state.constitutions && state.constitutions.length)
+      ? state.constitutions.map(n => `<span style="color:#e8d0a0;">${n}</span>`).join('<br>')
+      : '无';
+  // 同步顶部常驻栏
+  updateTopBar();
+}
+
+// 顶部修炼进度条与基础属性
+function updateTopBar() {
+  const c = state.cultivation;
+  document.getElementById('bar-realm').textContent = c.realm;
+  document.getElementById('bar-rank').textContent = c.discipleRank;
+  document.getElementById('bar-lingli-fill').style.width = (c.lingli / c.lingliMax * 100) + '%';
+  document.getElementById('bar-lingli-text').textContent = c.lingli + '/' + c.lingliMax;
+  document.getElementById('bar-linggen').textContent = state.linggen;
+  document.getElementById('bar-maincult').textContent = state.mainCult;
+  document.getElementById('bar-sword').textContent = c.swordArtLevel;
+  document.getElementById('bar-boneage').textContent = c.boneAge;
+  document.getElementById('bar-lifespan').textContent = (c.lifespan >= 99999 ? '无尽' : c.lifespan);
+  document.getElementById('bar-free').textContent = c.freeActions;
+}
+
+// 切换面板显隐
+function toggleCultPanel() {
+  const panel = document.getElementById('cult-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function showAffPopup(text) {
+  const popup = document.createElement('div');
+  popup.className = 'aff-popup';
+  popup.textContent = text;
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 2000);
+}
+
+// ==================== 文本渲染 ====================
+function clearText() {
+  document.getElementById('text-area').innerHTML = '';
+  document.getElementById('choices').innerHTML = '';
+}
+
+function addText(html, className = '') {
+  const area = document.getElementById('text-area');
+  const div = document.createElement('div');
+  div.className = 'text-line ' + className;
+  div.innerHTML = html;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function addNarration(text) { addText(text, 'narration'); }
+function addDialogue(speaker, text, charClass = '') {
+  addText(`<span class="speaker">${speaker}</span>「${text}」`, 'dialogue ' + charClass);
+}
+function addThought(text) { addText('（' + text + '）', 'thought'); }
+
+function showChoices(choices) {
+  const container = document.getElementById('choices');
+  container.innerHTML = '';
+  choices.forEach((c) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c.text;
+    btn.onclick = () => {
+      container.innerHTML = '';
+      if (c.result) addNarration('▸ ' + c.result);
+      if (c.effect) c.effect();
+      setTimeout(() => { c.next(); }, c.delay || 800);
+    };
+    container.appendChild(btn);
+  });
+}
+
+function setChapterBg(ch) {
+  const bg = document.getElementById('bg-layer');
+  bg.className = '';
+  if (ch >= 1 && ch <= 5) bg.classList.add('chapter' + ch);
+  // 改为"幕"标记，弱化章节感
+  document.getElementById('chapter-title').textContent =
+    ['', '仙途·初入昆仑', '仙途·宗门旧事', '仙途·入世历练', '仙途·秘境迷渊', '仙途·三界动荡'][ch] || '仙途';
+}
+
+function createStars() {
+  for (let i = 0; i < 50; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.animationDelay = Math.random() * 3 + 's';
+    star.style.width = star.style.height = (Math.random() * 2 + 1) + 'px';
+    document.body.appendChild(star);
+  }
+}
+
+function createPetals() {
+  const petalChars = ['❀', '✿', '❁', '✾'];
+  for (let i = 0; i < 12; i++) {
+    const petal = document.createElement('div');
+    petal.className = 'petal';
+    petal.textContent = petalChars[Math.floor(Math.random() * petalChars.length)];
+    petal.style.left = Math.random() * 100 + '%';
+    petal.style.animationDelay = (Math.random() * 12) + 's';
+    petal.style.animationDuration = (10 + Math.random() * 8) + 's';
+    petal.style.fontSize = (10 + Math.random() * 8) + 'px';
+    document.body.appendChild(petal);
+  }
+}
+
+// ==================== 自由行动系统 ====================
+// 显示自由行动菜单：根据章节解锁不同地点
+function showFreeAction(nextScene, customTitle) {
+  clearText();
+  addNarration(customTitle || '——自由行动·行动点可用——');
+  addNarration('剩余行动点：' + state.cultivation.freeActions + ' 点');
+  addNarration('（每次行动消耗 1 点。主线为修炼，恋爱为支线，可自由选择去处推进剧情）');
+  addNarration('');
+
+  const places = getAvailablePlaces();
+
+  // 无剩余行动点：直接进入下一幕
+  if (state.cultivation.freeActions <= 0) {
+    addNarration('你今日已无心外游，早早歇下。');
+    setTimeout(() => nextScene(), 1500);
+    return;
+  }
+
+  const container = document.getElementById('choices');
+  container.innerHTML = '';
+
+  places.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = '【' + p.name + '】<div style="font-size:12px;color:#a09070;margin-top:4px;">' + p.desc + '</div>';
+    btn.onclick = () => {
+      container.innerHTML = '';
+      state.cultivation.freeActions--;
+      updateCultPanel();
+      p.action(() => {
+        // 行动结束：若还有行动点，继续选择；否则进入下一幕
+        if (state.cultivation.freeActions > 0) {
+          showFreeAction(nextScene, '——还可再去一处·行动点剩余——');
+        } else {
+          addNarration('');
+          addNarration('行动点耗尽。今日事毕。');
+          setTimeout(() => nextScene(), 1500);
+        }
+      });
+    };
+    container.appendChild(btn);
+  });
+
+  // 跳过选项
+  const skipBtn = document.createElement('button');
+  skipBtn.className = 'choice-btn';
+  skipBtn.textContent = '歇下（跳过本轮自由行动）';
+  skipBtn.style.opacity = '0.7';
+  skipBtn.onclick = () => {
+    container.innerHTML = '';
+    addNarration('你直接歇下，未外出。');
+    setTimeout(() => nextScene(), 1200);
+  };
+  container.appendChild(skipBtn);
+}
+
+// 根据章节返回可去地点
+function getAvailablePlaces() {
+  const ch = state.chapter;
+  const places = [];
+  
+  // 通用：后山练剑（解锁剑法/灵力）
+  places.push({
+    name: '后山练剑台',
+    desc: '独自练剑，提升剑法与灵力',
+    action: cb => place_practice(cb)
+  });
+  
+  // 通用：吐纳静修（提升灵力）
+  places.push({
+    name: '东峰静室',
+    desc: '吐纳静修，提升灵力',
+    action: cb => place_meditate(cb)
+  });
+  
+  // 第1章后解锁：桃林（沈怀舟常在）
+  if (ch >= 1) {
+    places.push({
+      name: '桃林',
+      desc: '桃花深处，大师兄常在',
+      action: cb => place_peachwood(cb)
+    });
+  }
+  
+  // 第1章见容昭后解锁：书房
+  if (state.flags.metRongzhao) {
+    places.push({
+      name: '师尊书房',
+      desc: '送茶或问学',
+      action: cb => place_study(cb)
+    });
+  }
+  
+  // 第2章后解锁：练剑台残痕（厉寒渊）
+  if (state.flags.foundVoice) {
+    places.push({
+      name: '后山残痕',
+      desc: '那个声音，今夜可在？',
+      action: cb => place_remnant(cb)
+    });
+  }
+  
+  // 第3章后解锁：人界集市（慕长离）
+  if (state.flags.metSu) {
+    places.push({
+      name: '人界集市',
+      desc: '那个银发摊主，今日可在树下？',
+      action: cb => place_market(cb)
+    });
+  }
+  
+  return places;
+}
+
+// 地点事件 ====================
+function place_practice(cb) {
+  addNarration('你来到后山练剑台，独自挥剑。');
+  const r = Math.random();
+  if (r < 0.5) {
+    addNarration('剑势渐顺，你对起手式有了新的领悟。');
+    addSwordArt(8); addLingli(15);
+  } else {
+    addNarration('剑掉了三次，手腕磨破了皮。但你坚持下来。');
+    addSwordArt(5); addLingli(10);
+  }
+  addYears(1);
+  setTimeout(cb, 1800);
+}
+
+function place_meditate(cb) {
+  const medText = {
+    '混沌灵根': '你在东峰静室盘膝吐纳。混沌之气在经脉中翻涌，吸纳灵气如鲸吞海。',
+    '天灵根':   '你在东峰静室盘膝吐纳。天灵根吸纳灵气如海纳百川，灵力沿经脉周天而行。',
+    '雷灵根':   '你在东峰静室盘膝吐纳。雷气在经脉中奔腾，你须以心压制其狂暴。',
+    '冰灵根':   '你在东峰静室盘膝吐纳。寒气弥漫静室，灵力凝实如冰。',
+    '风灵根':   '你在东峰静室盘膝吐纳。灵气如风，流转无痕，吸纳轻盈。',
+    '双灵根':   '你在东峰静室盘膝吐纳。两道灵根并行不悖，吸纳平稳。',
+    '三灵根':   '你在东峰静室盘膝吐纳。三道灵根渐趋调和，吸纳虽慢却稳。',
+    '四灵根':   '你在东峰静室盘膝吐纳。四灵驳杂，吸纳偏慢，但你耐着性子。',
+    '五灵根':   '你在东峰静室盘膝吐纳。五灵根吸纳灵气极慢，但你耐着性子。'
+  };
+  addNarration(medText[state.linggen] || medText['五灵根']);
+  addLingli(25); addYears(2);
+  setTimeout(cb, 1800);
+}
+
+function place_peachwood(cb) {
+  addNarration('桃林深处，沈怀舟在树下泡茶。');
+  addDialogue('沈怀舟', '来了？坐。', 'shenhuaizhou');
+  const r = Math.random();
+  if (r < 0.4) {
+    addNarration('他递给你一杯茶。茶温刚好。你陪他坐了一下午，没说什么，但他一直比你慢半步地翻书。');
+    changeAffection('shenhuaizhou', 6); addLingli(5);
+  } else if (r < 0.7) {
+    addNarration('他教你一套吐纳法门。讲到一半，他忽然停下来，看着你握剑的手说：「茧还在原位。还疼吗？」');
+    changeAffection('shenhuaizhou', 8); addLingli(8);
+  } else {
+    addNarration('你蹲下来捡桃花瓣。他看着你笑，桃花眼弯弯的。半晌，他低声说了一句：「你今天，像个孩子。」');
+    changeAffection('shenhuaizhou', 7);
+  }
+  addYears(1);
+  setTimeout(cb, 1800);
+}
+
+function place_study(cb) {
+  addNarration('你端着一杯茶去书房。门半掩，他在看书。');
+  addDialogue('容昭', '放桌上。', 'rongzhao');
+  const r = Math.random();
+  if (r < 0.5) {
+    addNarration('你放下茶要走。他忽然开口：「……今天剑法练到第几页。」你答了。他没抬头，但翻书的手停了一瞬——他记下了。');
+    changeAffection('rongzhao', 5); addLingli(5); addSwordArt(3);
+  } else {
+    addNarration('你站了一会儿。他没赶你走。书翻到某一页时，他递给你：「这页，看完再走。」你接过——上面有他批注的字。');
+    changeAffection('rongzhao', 6); addLingli(10);
+  }
+  addYears(1);
+  setTimeout(cb, 1800);
+}
+
+function place_remnant(cb) {
+  addNarration('你来到练剑台残痕前，蹲下，碰了碰那道纹路。');
+  const r = Math.random();
+  if (r < 0.4) {
+    addNarration('没有声音。你练了一会儿剑，起身要走。身后传来一句：「手腕。」——他还是那句。');
+    addSwordArt(6); addLingli(8);
+  } else if (r < 0.75) {
+    addDialogue('厉寒渊', '今天起手式比昨天好一点。一点点。', 'lihanyuan');
+    addNarration('语气还是冷的，但你能听出那是夸——很吝啬的夸。');
+    changeAffection('lihanyuan', 4); addSwordArt(10);
+  } else {
+    addDialogue('厉寒渊', '……又来了。', 'lihanyuan');
+    addNarration('他没赶你走。你练到深夜。月亮升起时，他忽然问了一句：「外面，下雪了吗？」——像是问三百年前的某个人。');
+    changeAffection('lihanyuan', 6);
+  }
+  addYears(1);
+  setTimeout(cb, 1800);
+}
+
+function place_market(cb) {
+  addNarration('你下山去人界集市。那棵树下，慕长离还在。');
+  const r = Math.random();
+  if (r < 0.4) {
+    addDialogue('慕长离', '哟。又来了。', 'muchangli');
+    addNarration('他给你倒了杯茶，没问你来不来。异色瞳在阳光下几乎透明。');
+    changeAffection('muchangli', 5); addLingli(3);
+  } else if (r < 0.75) {
+    addNarration('他今天没摆摊。靠在树上打盹。你蹲下来看他的货物——一块石头，灰扑扑的，很圆。');
+    addDialogue('慕长离', '喜欢就拿去。', 'muchangli');
+    addNarration('他没睁眼。');
+    changeAffection('muchangli', 7);
+  } else {
+    addDialogue('慕长离', '你今天练剑了？', 'muchangli');
+    addNarration('你怎么练剑他都知道。你问他在哪看的。他笑而不答。');
+    changeAffection('muchangli', 4); addSwordArt(2);
+  }
+  addYears(1);
+  setTimeout(cb, 1800);
+}
+
+// ==================== 序章（单页药丸面板） ====================
+function scene_prologue() {
+  clearText();
+  setChapterBg(1);
+
+  // 默认选中
+  state.linggen = '天灵根';
+  state.daoPath = '苍生道';
+  state.mainCult = '剑修';
+  state.subCult = '采药';
+  state.origin = '凡人孤女';
+  state.constitutions = rollConstitutions(3);
+
+  const area = document.getElementById('text-area');
+  const container = document.getElementById('choices');
+  container.innerHTML = '';
+
+  // 名字库
+  const surnames = ['沈','李','张','王','慕','林','苏','陈','柳','叶','云','顾','白','江','南'];
+  const givenM = ['怀舟','寒渊','长离','清珩','砚秋','景行','怀瑾','明序','知微','望舒','朝辞','叙之'];
+  const givenF = ['疏影','知夏','南乔','念卿','若棠','昭昭','予安','云晚','听雪','挽意','岁宁','昭月'];
+  const genRandom = () => {
+    const s = surnames[Math.floor(Math.random()*surnames.length)];
+    const pool = Math.random() < 0.5 ? givenM : givenF;
+    const g = pool[Math.floor(Math.random()*pool.length)];
+    return s + g;
+  };
+
+  // 构造药丸按钮
+  const makePill = (text, group, value, opts) => {
+    const b = document.createElement('button');
+    b.className = 'cc-pill' + (opts && opts.active ? ' active' : '');
+    b.innerHTML = text + (opts && opts.speed ? `<span class="cc-speed">${opts.speed}</span>` : '');
+    b.onclick = () => {
+      // 同组单选
+      document.querySelectorAll(`.cc-pill[data-group="${group}"]`).forEach(p => p.classList.remove('active'));
+      b.classList.add('active');
+      state[group] = value;
+    };
+    b.dataset.group = group;
+    return b;
+  };
+
+  // 渲染某一组
+  const renderGroup = (parent, title, group, pool, keyOfSpeed) => {
+    const sec = document.createElement('div');
+    sec.className = 'cc-section';
+    const tit = document.createElement('div');
+    tit.className = 'cc-section-title';
+    tit.textContent = title;
+    sec.appendChild(tit);
+    const grid = document.createElement('div');
+    grid.className = 'cc-grid';
+    Object.keys(pool).forEach(k => {
+      grid.appendChild(makePill(k, group, k, {
+        active: state[group] === k,
+        speed: keyOfSpeed ? pool[k].speed : null
+      }));
+    });
+    sec.appendChild(grid);
+    parent.appendChild(sec);
+  };
+
+  // 构建整个捏人面板
+  const wrap = document.createElement('div');
+  wrap.className = 'char-create';
+
+  // 名字
+  const nameSec = document.createElement('div');
+  nameSec.className = 'cc-section';
+  const nameTit = document.createElement('div');
+  nameTit.className = 'cc-section-title';
+  nameTit.textContent = '道号 / 姓名';
+  nameSec.appendChild(nameTit);
+  const nameRow = document.createElement('div');
+  nameRow.className = 'cc-name-row';
+  nameRow.innerHTML = `<input id="name-input" placeholder="输入你的名字" maxlength="6">
+    <button class="cc-reroll" id="random-name-btn">随机</button>`;
+  nameSec.appendChild(nameRow);
+  wrap.appendChild(nameSec);
+
+  // 修道
+  renderGroup(wrap, '修道', 'daoPath', DAOPATH_BONUS, false);
+  // 灵根
+  renderGroup(wrap, '灵根（按修速从快到慢）', 'linggen', LINGGEN_BONUS, true);
+  // 主修
+  renderGroup(wrap, '主修', 'mainCult', MAINCULT_BONUS, false);
+  // 辅修
+  renderGroup(wrap, '辅修', 'subCult', SUBCULT_DESC, false);
+  // 家世
+  renderGroup(wrap, '家世背景', 'origin', ORIGIN_BONUS, false);
+
+  // 特殊体质
+  const constSec = document.createElement('div');
+  constSec.className = 'cc-section';
+  const constTit = document.createElement('div');
+  constTit.className = 'cc-section-title';
+  constTit.textContent = '特殊体质（随机3个，可重抽）';
+  constSec.appendChild(constTit);
+  const constGrid = document.createElement('div');
+  constGrid.className = 'cc-grid';
+  constGrid.id = 'constit-grid';
+  constSec.appendChild(constGrid);
+  const rerollBtn = document.createElement('button');
+  rerollBtn.className = 'cc-reroll';
+  rerollBtn.textContent = '换一批体质';
+  rerollBtn.style.marginTop = '8px';
+  rerollBtn.onclick = () => {
+    state.constitutions = rollConstitutions(3);
+    renderConstitutions();
+  };
+  constSec.appendChild(rerollBtn);
+  wrap.appendChild(constSec);
+
+  // 开始按钮
+  const startBtn = document.createElement('button');
+  startBtn.className = 'cc-start-btn';
+  startBtn.textContent = '开 始 冒 险';
+  startBtn.onclick = () => {
+    const name = document.getElementById('name-input').value.trim() || genRandom();
+    state.playerName = name;
+    applyIdentityBonus();
+    scene_chapter1_intro();
+  };
+  wrap.appendChild(startBtn);
+
+  const tip = document.createElement('div');
+  tip.className = 'cc-tip';
+  tip.textContent = '※ 灵根/道向/主修/家世/体质共同决定你的修炼效率、好感倾向与资源获取。';
+  wrap.appendChild(tip);
+
+  area.appendChild(wrap);
+  area.scrollTop = area.scrollHeight;
+
+  // 绑定随机名
+  document.getElementById('random-name-btn').onclick = () => {
+    document.getElementById('name-input').value = genRandom();
+  };
+
+  // 渲染体质标签
+  function renderConstitutions() {
+    const grid = document.getElementById('constit-grid');
+    grid.innerHTML = '';
+    state.constitutions.forEach(name => {
+      const tag = document.createElement('span');
+      tag.className = 'cc-constit-tag';
+      const cn = CONSTITUTION_POOL[name] ? CONSTITUTION_POOL[name].note : '';
+      tag.innerHTML = `${name}<span class="cc-cn">${cn}</span>`;
+      grid.appendChild(tag);
+    });
+  }
+  renderConstitutions();
+}
+
+// ==================== 第一章 ====================
+function scene_chapter1_intro() {
+  clearText();
+  setChapterBg(1);
+  // 出身文案
+  const originIntro = {
+    '凡人孤女': `你叫${state.playerName}，凡间孤女，被昆仑仙宗下山收徒的执事顺手带回。`,
+    '世家贵女': `你叫${state.playerName}，修真世家之女，自幼熏陶，家道中落后入宗。`,
+    '宗门弃徒': `你叫${state.playerName}，曾为别宗内门，因故被逐，转投昆仑。`,
+    '散修传人': `你叫${state.playerName}，师承山野散修，入门虽晚，见识却广。`,
+    '妖域遗孤': `你叫${state.playerName}，流落人界的妖族血脉，妖气隐隐。`,
+    '魔门余孽': `你叫${state.playerName}，魔门覆灭后的遗孤，身具魔气。`
+  };
+  addNarration(originIntro[state.origin] || originIntro['凡人孤女']);
+  addNarration('测灵根那天，你伸出测灵石的手在抖。');
+  // 根据所选灵根显示不同测灵石文案
+  const lgText = {
+    '混沌灵根': '测灵石轰然大震，五色光乱舞后归于混沌。主事者失声——混沌灵根，万劫无一！',
+    '天灵根':   '测灵石亮起一片金光，照得满堂皆惊。天灵根——万中无一，结丹前无瓶颈。仙道四峰峰主同时起身。',
+    '雷灵根':   '测灵石紫电狂舞，雷音阵阵。雷灵根——主事者皱眉，魔道两峰峰主却同时抬眼。',
+    '冰灵根':   '测灵石凝起一层寒霜，水雾成冰。冰灵根——寒气逼人，魔道峰主目光微凝。',
+    '风灵根':   '测灵石拂过一缕清风，光晕飘忽不定。风灵根——少见的木系变异。',
+    '双灵根':   '测灵石亮起两道不同色的光。双灵根——中庸之资，不显不弱。',
+    '三灵根':   '测灵石亮起三色光晕。三灵根——修速偏慢，然五行渐全。',
+    '四灵根':   '测灵石亮起驳杂四色。四灵根——修速龟爬，少有人多看一眼。',
+    '五灵根':   '测灵石亮了——很暗，很弱。五灵根。仙道修炼速度极慢，几无结丹可能。'
+  };
+  addNarration(lgText[state.linggen] || lgText['五灵根']);
+  addNarration('');
+  addNarration('按宗门规矩，你被定为杂役弟子，分到了最冷清的东峰。');
+  addNarration('东峰之上，桃树成林，却无人打理。你走着走着，迷了路。');
+  
+  setTimeout(() => {
+    addNarration('');
+    addNarration('桃花深处，一把月白色的伞，撑开了。');
+    addDialogue('???', '你是新来的师妹？', 'shenhuaizhou');
+    addNarration('你抬头，看到一个穿着月白道袍的年轻男子。眉眼温和，笑起来像三月春风。');
+    addDialogue('沈怀舟', '我是东峰大弟子，沈怀舟。你迷路了？', 'shenhuaizhou');
+    
+    showChoices([
+      {
+        text: '「对不起，我迷路了……给你添麻烦了。」',
+        result: '他愣了一下。你道歉是因为你真的觉得给人添了麻烦，语气很自然，没有半分讨好。东峰弟子都敬畏他，同门都巴结他，可你只是把他当成一个被你打扰了的人。',
+        effect: () => changeAffection('shenhuaizhou', 12),
+        next: scene_c1_bridge
+      },
+      {
+        text: '「你是大师兄？那以后请多指教！」',
+        result: '他笑了笑，桃花眼弯弯的。但笑里有一丝很快散去的疏离——你用的是「师兄」这个身份，而非他这个人。',
+        effect: () => changeAffection('shenhuaizhou', 8),
+        next: scene_c1_bridge
+      },
+      {
+        text: '「我自己能找到路，不用麻烦你。」',
+        result: '他收起伞，看了你很久。你语气硬，却没有恶意。他没说话，只是把伞收进了袖中。',
+        effect: () => changeAffection('shenhuaizhou', 5),
+        next: scene_c1_bridge
+      }
+    ]);
+  }, 1500);
+}
+
+function scene_c1_bridge() {
+  addNarration('');
+  addNarration('他没有再多说什么，只是蹲下身，背对着你。');
+  addDialogue('沈怀舟', '上来吧。东峰的路不好走，天黑之前到不了。', 'shenhuaizhou');
+  addNarration('你趴在他背上。他的背很暖，走得很慢。');
+  addNarration('你困了。迷迷糊糊之间，你感觉他绕了很远的路。');
+  addNarration('');
+  addNarration('到了住处，他把你放下，替你盖好被子。');
+  addDialogue('沈怀舟', '明天带你去见师尊。早点睡。', 'shenhuaizhou');
+  addNarration('他转身离开。走到门口，又停下。');
+  addDialogue('沈怀舟', '……你叫什么名字？', 'shenhuaizhou');
+  addNarration(`你报了名字。他点了点头，推门走了。`);
+  addNarration('');
+  addNarration('你不知道的是——他走到拐角处，靠着墙站了很久。');
+  addNarration('他摸着自己的耳朵。是烫的。');
+  
+  setTimeout(() => {
+    addNarration('');
+    addNarration('第二天清晨，沈怀舟来找你。');
+    addDialogue('沈怀舟', '今天带你去见师尊。路上……我教你几个基本的吐纳法门。', 'shenhuaizhou');
+    addNarration('他站在桃树下，朝你伸出手。');
+    showChoices([
+      {
+        text: '「好，谢谢大师兄。」（握住他的手）',
+        result: '他掌心有薄茧，握剑留下的。你注意到茧的位置和他教你的握剑姿势对不上——他藏了旧伤。他没松开，一路上教得很慢，每一个呼吸都亲自示范。',
+        effect: () => changeAffection('shenhuaizhou', 8),
+        next: scene_c1_rongzhao
+      },
+      {
+        text: '「我自己走就行。」（没有握手）',
+        result: '他收回手，笑了笑，没有勉强。但他走在你身侧，始终比你慢半步。',
+        effect: () => changeAffection('shenhuaizhou', 5),
+        next: scene_c1_rongzhao
+      },
+      {
+        text: '「大师兄，你每天都起这么早吗？」',
+        result: '他愣了一下。「嗯。习惯了。东峰人少，总得有人守着。」他答得很平，但你感觉到那是实话。',
+        effect: () => changeAffection('shenhuaizhou', 7),
+        next: scene_c1_rongzhao
+      }
+    ]);
+  }, 2000);
+}
+
+function scene_c1_rongzhao() {
+  clearText();
+  addNarration('你跟着沈怀舟上了东峰之巅。');
+  addNarration('一座清冷的殿宇立在峰顶，殿门半掩，里面传来翻书的声音。');
+  addNarration('你推门进去。');
+  addNarration('');
+  addNarration('殿内，一个白色长发的男人坐在案前。他的眼睛是冰蓝色的，像结了冰的湖。');
+  addNarration('他没有抬头。');
+  addDialogue('沈怀舟', '师尊，这是新入门的师妹。', 'shenhuaizhou');
+  addNarration('他翻了一页书。');
+  addDialogue('容昭', '嗯。', 'rongzhao');
+  addNarration('沈怀舟退下了。殿内只剩你和他。');
+  addNarration('他终于抬头，看了你一眼。');
+  addDialogue('容昭', '伸出手。', 'rongzhao');
+  addNarration('你伸出测灵石。他指尖点在测灵石上，灵力探入。');
+  addNarration('片刻，他收回手。');
+  addDialogue('容昭', `${state.linggen}。……能修。`, 'rongzhao');
+  addNarration('声音很轻，像在说给自己听。');
+  addNarration('');
+  addNarration('然后他又低下头看书，像是你从未来过。');
+  addNarration('你站在殿中，不知道该走还是该留。');
+  addNarration('你鼓起勇气，问了一句——');
+
+  showChoices([
+    {
+      text: '「师尊，我……还能留在东峰吗？」',
+      result: `他翻书的手停了一瞬。测灵根后你没有追问「为什么我是${state.linggen}」，也没有露出失望的表情。你只是点了点头，说了声「哦」。他觉得你安静——安静到他愿意让你留下。`,
+      effect: () => changeAffection('rongzhao', 18),
+      next: scene_c1_rongzhao_deeper
+    },
+    {
+      text: '「师尊，我会努力的，不会给您丢脸。」',
+      result: '他没有抬头，只是翻了一页书。你这句话和其他弟子说的一样。但你注意到，他翻的那一页，和上一页是同一页——他没在听，但也没让你走。',
+      effect: () => changeAffection('rongzhao', 13),
+      next: scene_c1_rongzhao_deeper
+    },
+    {
+      text: '（默默退出去，不打扰他）',
+      result: '你走到门口时，身后传来他的声音：「明天来我书房。」他收徒从不解释，但这个「明天」是留你的意思。',
+      effect: () => changeAffection('rongzhao', 15),
+      next: scene_c1_rongzhao_deeper
+    }
+  ]);
+}
+
+function scene_c1_rongzhao_deeper() {
+  addNarration('');
+  addNarration('你正要离开，他忽然又开口了。');
+  addDialogue('容昭', '……你叫什么名字。', 'rongzhao');
+  addNarration('你报了名字。他重复了一遍，声音很低。');
+  addDialogue('容昭', '东峰人少。有什么不懂的，来问我。', 'rongzhao');
+  addNarration('这是他说过最长的一句话。');
+  
+  setTimeout(() => {
+    addNarration('');
+    addNarration('第二天清晨，你发现窗台上多了一本手抄剑谱。字迹是新的，墨还没干透。');
+    addNarration('你翻开第一页，上面写着——');
+    addNarration('「基础剑法·东峰入门。练熟之后再练第二页。」');
+    addNarration('字迹清隽，和藏经阁残页上的一模一样。');
+    
+    showChoices([
+      {
+        text: '去书房找师尊道谢。',
+        result: '你敲门进去，他正在看书。你说谢谢，他头也没抬，只说了句「放桌上」。你放了茶，走了。过了很久，他才拿起那杯茶——他记得你泡茶时水温偏高，是怕他嫌凉。',
+        effect: () => changeAffection('rongzhao', 11),
+        next: scene_c1_end
+      },
+      {
+        text: '先练熟再说。',
+        result: '你练了一整天。傍晚时，你发现窗台上又多了一瓶伤药。没有署名，但瓶底刻着一个「容」字。他写剑谱写到半夜，墨迹未干就放在你窗台——伤药也是，药味还是新的。',
+        effect: () => { changeAffection('rongzhao', 9); addSwordArt(5); addLingli(10); },
+        next: scene_c1_end
+      },
+      {
+        text: '去问大师兄，这是不是师尊给的。',
+        result: '沈怀舟看了一眼剑谱，沉默了一会儿，笑了。「是师尊的字。他很多年没写过剑谱了。」他顿了顿，「他以前写过——给另一个人。」',
+        effect: () => { changeAffection('shenhuaizhou', 8); changeAffection('rongzhao', 5); },
+        next: scene_c1_end
+      }
+    ]);
+  }, 2000);
+}
+
+function scene_c1_end() {
+  addNarration('');
+  addNarration('就这样，你成了东峰的第四名弟子。');
+  addNarration('东峰只有四个人——你、大师兄沈怀舟、师尊容昭，还有一个常年在魔渊洞闭关的「二师姐」。');
+  addNarration('');
+  addNarration('——此幕暂歇·东峰夜行——');
+  state.flags.metRongzhao = true;  // 解锁书房地点
+  
+  setTimeout(() => {
+    state.chapter = 2;
+    grantActionPoints(2);
+    showFreeAction(scene_chapter2_start, '——入夜，可在东峰各处走动——');
+  }, 2500);
+}
+
+// ==================== 第二章 ====================
+function scene_chapter2_start() {
+  clearText();
+  setChapterBg(2);
+  addNarration('日子一天天过去。你资质虽差，却比谁都努力。');
+  addNarration('每天天不亮就起来练剑，夜深了还在后山挥剑。');
+  addNarration('你练的是东峰最基础的入门剑法。因为你只会这个。');
+  addNarration('');
+  addNarration('有一天，你在练剑时，听到两个仙道峰的弟子在议论——');
+  addNarration('');
+  addDialogue('弟子甲', '你听说了吗？三百年前东峰有个叛徒，勾结魔道，残害同门，被宗门逐出去了。', '');
+  addDialogue('弟子乙', '嘘——别提那个人。现在他是魔界的血魔尊，三界闻之色变。', '');
+  addDialogue('弟子甲', '听说他以前也是东峰的，还是容昭师尊的师弟……', '');
+  addDialogue('弟子乙', '别说了别说了，被师尊听到就完了。', '');
+  addNarration('');
+  addNarration('你第一次听说「三百年前的叛徒」。');
+  addNarration('你很好奇。一个东峰弟子，怎么会堕入魔道？');
+  
+  showChoices([
+    {
+      text: '去藏经阁查资料，弄清楚三百年前发生了什么。',
+      result: '你花了好几个晚上，终于在一本旧册的夹层里，找到了一页残篇。',
+      effect: () => { changeAffection('lihanyuan', 15); state.flags.foundRecord = true; },
+      next: scene_c2_records
+    },
+    {
+      text: '问大师兄沈怀舟。',
+      result: '沈怀舟沉默了很久，说：「别查了。有些事，不知道更好。」',
+      effect: () => changeAffection('shenhuaizhou', 15),
+      next: scene_c2_ask_yunzhou
+    },
+    {
+      text: '问师尊容昭。',
+      result: '你敲了书房的门。他听完你的问题，翻书的手停了。很久，他说：「……你练你的剑。」',
+      effect: () => changeAffection('rongzhao', 18),
+      next: scene_c2_ask_rongzhao
+    }
+  ]);
+}
+
+function scene_c2_records() {
+  addNarration('');
+  addNarration('藏经阁最深处，你找到了一本被撕去几页的旧册。');
+  addNarration('残存的页面上，有一行字——');
+  addNarration('');
+  addNarration('「他没有错，错的是这个宗门。」');
+  addNarration('');
+  addNarration('字迹清隽，是容昭的笔迹。页脚有一滴干涸的血迹。');
+  addNarration('你盯着那行字看了很久。');
+  addThought('他……是谁？');
+  
+  setTimeout(() => {
+    addNarration('');
+    addNarration('那天夜里，你做了一个梦。');
+    addNarration('梦里一片血红。一个男人的身影站在血雾中，背对着你。');
+    addNarration('他慢慢转身——血色瞳仁，魔气滔天。');
+    addNarration('你看不清他的脸。但你听到他说了一句话——');
+    addDialogue('???', '……三百年了。', 'lihanyuan');
+    addNarration('');
+    addNarration('你惊醒。窗外，月正中天。');
+    setTimeout(() => scene_c2_practice(), 2000);
+  }, 2000);
+}
+
+function scene_c2_ask_yunzhou() {
+  addNarration('');
+  addNarration('沈怀舟正在桃树下泡茶。听到你的问题，他的手顿了一下。');
+  addDialogue('沈怀舟', '你听谁说的？', 'shenhuaizhou');
+  addNarration('他的语气很平静，但端着茶杯的手指微微泛白。');
+  addDialogue('沈怀舟', '那个人……是我师兄。三百年前，我是东峰最小的弟子。', 'shenhuaizhou');
+  addDialogue('沈怀舟', '他教过我握剑。他被带走那天，东峰下了很大的雪。', 'shenhuaizhou');
+  addNarration('他抬头看你，笑容温和：');
+  addDialogue('沈怀舟', '师妹，有些事，不知道更好。你只要在东峰好好待着就行。', 'shenhuaizhou');
+  addNarration('你注意到，他的茶杯已经凉了。但他一口没喝，只是攥着。');
+  
+  showChoices([
+    {
+      text: '「大师兄，你手冷。我给你换杯热的。」',
+      result: '他倒茶时手抖了一下，你看见了。你没问，但你把那杯凉茶倒掉，重新泡了一杯温的，推到他面前。他低头看了你一眼，端起来，这次他喝了。',
+      effect: () => changeAffection('shenhuaizhou', 18),
+      next: scene_c2_practice
+    },
+    {
+      text: '「那他……是好人吗？」',
+      result: '他沉默了很久。「他教我握剑的时候，手很稳。他教我认字的时候，很有耐心。」他抬头看你，「你说呢。」',
+      effect: () => { changeAffection('shenhuaizhou', 14); changeAffection('lihanyuan', 8); },
+      next: scene_c2_practice
+    },
+    {
+      text: '「我知道了。谢谢大师兄。」',
+      result: '他点了点头，笑容温和。但你转身离开时，听到身后一声很轻的叹息。',
+      effect: () => changeAffection('shenhuaizhou', 7),
+      next: scene_c2_practice
+    }
+  ]);
+}
+
+function scene_c2_ask_rongzhao() {
+  addNarration('');
+  addNarration('你站在书房里，等着他的回答。');
+  addNarration('他翻完了一页书，又翻了一页。很久，他才开口。');
+  addDialogue('容昭', '他是我师弟。', 'rongzhao');
+  addNarration('声音很平，但你看到他的指尖微微发白。');
+  addDialogue('容昭', '三百年前的事，与你无关。你练你的剑。', 'rongzhao');
+  addNarration('他低下头，不再看你。但你注意到，那本书，他翻到的那一页，始终没有翻过去。');
+  
+  showChoices([
+    {
+      text: '「师尊，你……难过吗？」',
+      result: '他翻书的手停了一瞬。冰蓝的眼睛抬起来看你。很久，他说：「……出去。」你转身时，他又开口：「明天来。」第二天你去了，他递给你一本书，翻到某一页。上面有他批注的字。',
+      effect: () => changeAffection('rongzhao', 20),
+      next: scene_c2_practice
+    },
+    {
+      text: '「那我以后不问了。」',
+      result: '他点了点头，翻了一页书。但你走到门口时，听到他轻声说了一句：「……不是你的错。」——这句不是对你说的，是说给三百年前那个人听的。',
+      effect: () => changeAffection('rongzhao', 15),
+      next: scene_c2_practice
+    },
+    {
+      text: '（什么都不说，退出去）',
+      result: '你退了出去。门关上的那一刻，你听到里面传来一声极轻的响动——像是书掉在了地上。',
+      effect: () => changeAffection('rongzhao', 12),
+      next: scene_c2_practice
+    }
+  ]);
+}
+
+function scene_c2_practice() {
+  clearText();
+  addNarration('你开始每天在后山练剑。东峰后山有一处废弃的练剑台，据说三百年前有人在那里练过剑。');
+  addNarration('你资质差，只能用最基础的剑法，一遍遍地挥。');
+  addNarration('第一天，剑掉了。第二天，摔了。第三天，手腕肿了。');
+  addNarration('但你继续练。');
+  addNarration('');
+  addNarration('第十天，你练到深夜。月光照在练剑台上，你忽然感觉脚下的石板微微发烫。');
+  addNarration('一道暗色的纹路从石板中浮现，像是一道残留的痕迹。');
+  addNarration('你伸手碰了一下那道纹路。');
+  addNarration('');
+  addNarration('轰——');
+  addNarration('');
+  addNarration('一股冰凉的气息顺着你的指尖窜入体内。你听到一个声音——');
+  addDialogue('???', '剑尖再低三寸。手腕放松。你太紧了。', 'lihanyuan');
+  addNarration('你吓得剑都掉了。四处张望，空无一人。');
+  
+  showChoices([
+    {
+      text: '「你是谁？出来！」',
+      result: '那个声音没出来，只冷冷说了一句：「问那么多做什么。练你的剑。」语气是不耐烦的。你练了三个月连起手式都没对，他看得烦躁。',
+      effect: () => changeAffection('lihanyuan', 12),
+      next: scene_c2_voice
+    },
+    {
+      text: '（捡起剑，继续练）',
+      result: '你捡起剑，按他说的调整了姿势。剑势顺畅了许多。那个声音没有再出现，但你能感觉到——有人在看着你。看得有些挑剔。',
+      effect: () => changeAffection('lihanyuan', 10),
+      next: scene_c2_voice
+    },
+    {
+      text: '（转身就跑）',
+      result: '你跑了。但跑出练剑台的那一刻，身后传来一声嗤笑：「跑什么。」语气很轻蔑。',
+      effect: () => changeAffection('lihanyuan', 6),
+      next: scene_c2_voice
+    }
+  ]);
+}
+
+function scene_c2_voice() {
+  addNarration('');
+  addNarration('从那天起，你每天都会去后山练剑。');
+  addNarration('那个声音每天都会出现，纠正你的剑势。');
+  addNarration('“手腕太紧。”“脚步太慢。”“剑不是砍的，是刺的。”');
+  addNarration('你慢慢习惯了。甚至开始期待每天的这个时辰。');
+  addNarration('');
+  addNarration('有一天，你练完剑，对着空气说了一句——');
+  addDialogue(state.playerName, '谢谢。', '');
+  addNarration('');
+  addNarration('那个声音沉默了。');
+  addNarration('很久很久。');
+  addDialogue('???', '……不用谢。', 'lihanyuan');
+  addNarration('声音很轻，像风穿过桃花。');
+  addNarration('');
+  addNarration('你犹豫了一下，又问——');
+  
+  showChoices([
+    {
+      text: '「师兄，你叫什么名字？」',
+      result: '他反问：「知道了又怎样？」你说「不怎样，就是想知道」。他停顿了一下，说「厉寒渊」。然后立刻补一句：「别到处说。」语气很冷，但你听出他没真赶你。',
+      effect: () => changeAffection('lihanyuan', 15),
+      next: scene_c2_end
+    },
+    {
+      text: '「你明天还会来吗？」',
+      result: '他沉默了一瞬。「……你来了，我就在。」说完像是嫌这话太软，又补一句，「你练成什么样我都不管，自己看着办。」',
+      effect: () => changeAffection('lihanyuan', 13),
+      next: scene_c2_end
+    },
+    {
+      text: '「你……是不是东峰的人？」',
+      result: '沉默了很久。然后他说：「……以前是。」声音里带着三百年的重量。他没有再说下去，像是这句话已经说多了。',
+      effect: () => changeAffection('lihanyuan', 11),
+      next: scene_c2_end
+    }
+  ]);
+}
+
+function scene_c2_end() {
+  addNarration('');
+  addNarration('你回到住处时，发现窗台上多了一碟点心。还是热的。');
+  addNarration('你拿起来，发现碟子底下压了一张纸条——');
+  addNarration('');
+  addNarration('「练剑辛苦。早点睡。」');
+  addNarration('');
+  addNarration('没有署名。但字迹很新，墨还没干透。');
+  addNarration('');
+  addNarration('——此幕暂歇·旧事翻页——');
+  state.flags.foundVoice = true;  // 解锁后山残痕地点
+  
+  setTimeout(() => {
+    state.chapter = 3;
+    grantActionPoints(2);
+    showFreeAction(scene_chapter3_start, '——近来事多，可在宗内各处散心——');
+  }, 2500);
+}
+
+// ==================== 第三章 ====================
+function scene_chapter3_start() {
+  clearText();
+  setChapterBg(3);
+  addNarration('三个月后，宗门安排弟子下山历练。');
+  addNarration('你被分到了人界集市的任务——采购药材，顺便见见世面。');
+  addNarration('');
+  addNarration('人界集市很热闹。你办完事，在街上闲逛。');
+  addNarration('一个不起眼的小摊吸引了你的注意。');
+  addNarration('摊上摆着各种稀奇古怪的东西——石头、木头、旧书。');
+  addNarration('摊主靠在树上，银白长发，月白广袖，闭着眼，像是在打盹。');
+  addNarration('你蹲下来，拿起一块石头看了半天。');
+  addNarration('石头很圆，灰扑扑的，没有任何灵气波动。但你喜欢。');
+  addDialogue('摊主', '那块是废石。', 'muchangli');
+  addNarration('他没有睁眼，声音懒洋洋的。');
+  state.flags.metSu = true;  // 解锁集市地点
+  
+  showChoices([
+    {
+      text: '「可它很圆，放在水里应该好看。」',
+      result: '他睁开了眼。异色瞳一闪——左眼鎏金，右眼紫罗兰。他抬价：「这石头我要价三两。」你说「那我不买了」。他立刻降价：「行吧行吧，一块铜板。」——纯粹是觉得你砍价的样子好玩。',
+      effect: () => changeAffection('muchangli', 18),
+      next: scene_c3_buy
+    },
+    {
+      text: '「多少钱？我买了。」',
+      result: '他终于睁眼，看了看你手里的石头，又看了看你。他笑了：「你确定？这石头拿去铺路都嫌丑。」——你直接掏钱让他觉得无趣，他反而想多逗你几句。',
+      effect: () => changeAffection('muchangli', 13),
+      next: scene_c3_buy
+    },
+    {
+      text: '「废石？那算了。」（放下石头）',
+      result: '你放下石头，站起来要走。身后传来他的声音：「等等。」——你转身要走反而勾起了他的兴致。',
+      effect: () => changeAffection('muchangli', 10),
+      next: scene_c3_buy
+    }
+  ]);
+}
+
+function scene_c3_buy() {
+  addNarration('');
+  addNarration('你掏出所有的铜板，摊在手心。');
+  addDialogue(state.playerName, '这些……够吗？');
+  addNarration('他低头看着你手心的铜板，看了很久。');
+  addNarration('然后他伸手，拿走了其中一枚。');
+  addDialogue('慕长离', '够了。一枚就行。', 'muchangli');
+  addNarration('他把石头递给你，指尖擦过你的掌心。他的手指很凉。');
+  addDialogue('慕长离', '我叫慕长离。做点小生意。', 'muchangli');
+  addNarration('你报了名字。他重复了一遍，像是在品味什么。');
+  addDialogue('慕长离', `……${state.playerName}。好名字。`, 'muchangli');
+  addNarration('');
+  addNarration('你正要走，他又开口了。');
+  addDialogue('慕长离', '喂。', 'muchangli');
+  addNarration('你回头。他靠在树上，异色瞳在阳光下闪了一下。');
+  addDialogue('慕长离', '明天还来吗？', 'muchangli');
+  
+  showChoices([
+    {
+      text: '「来。」',
+      result: '他笑了。你答应得干脆，他反倒有点意外。他扔给你一块石头：「拿着，下次来带点别的。」你没接，石头掉在地上。他弯腰捡起来，吹了吹灰，塞进你手里。',
+      effect: () => changeAffection('muchangli', 20),
+      next: scene_c3_su_tea
+    },
+    {
+      text: '「不一定。看情况。」',
+      result: '他挑了挑眉，笑了。「行。那我等着。反正我时间多。」——他时间确实多，三千年什么人都见过，等你只是顺手。',
+      effect: () => changeAffection('muchangli', 13),
+      next: scene_c3_su_tea
+    },
+    {
+      text: '「你是谁？为什么问我？」',
+      result: '他歪了歪头，异色瞳金紫交织。「我是谁不重要。重要的是——你手里那块石头，整个集市只有我看得出它好看。你也看出来了。」',
+      effect: () => changeAffection('muchangli', 16),
+      next: scene_c3_su_tea
+    }
+  ]);
+}
+
+function scene_c3_su_tea() {
+  addNarration('');
+  addNarration('第二天，你还是去了集市。');
+  addNarration('他还在那棵树下，但摊子收了。取而代之的是一壶茶，两只杯子。');
+  addDialogue('慕长离', '坐。', 'muchangli');
+  addNarration('他给你倒了一杯茶。你喝了一口，很香，但你说不出是什么茶。');
+  addDialogue('慕长离', '三千年的雪顶寒梅。整个三界，只有我有。', 'muchangli');
+  addNarration('你差点呛到。他看着你笑，眼睛弯弯的，异色瞳在阳光下几乎透明。');
+  
+  showChoices([
+    {
+      text: '「你到底是什么人？」',
+      result: '他晃了晃手里的茶杯。「一个活了太久、有点无聊的人。你呢？你是什么人？」——他约你喝茶是因为你砍价的样子让他想起以前摆摊的日子，很久以前他还不是狐尊的时候。',
+      effect: () => changeAffection('muchangli', 15),
+      next: scene_c3_yunzhou
+    },
+    {
+      text: '「这茶……很贵吧？」',
+      result: '他笑了。「不贵。能有人陪我喝，就不贵。」——这是试探，看你接不接得住。你没接，他也没在意。',
+      effect: () => changeAffection('muchangli', 15),
+      next: scene_c3_yunzhou
+    },
+    {
+      text: '「谢谢你的茶。我得回去了。」',
+      result: '他点了点头，没有挽留。但你走到街角时，回头看了一眼——他还坐在那里，看着你离开的方向，很久。',
+      effect: () => changeAffection('muchangli', 10),
+      next: scene_c3_yunzhou
+    }
+  ]);
+}
+
+function scene_c3_yunzhou() {
+  clearText();
+  addNarration('回到东峰时，天色已晚。');
+  addNarration('沈怀舟站在廊下，端着一杯茶。茶是凉的，他攥了一下午。');
+  addDialogue('沈怀舟', '回来了？集市好玩吗？', 'shenhuaizhou');
+  addNarration('他笑着问你，语气很随意。');
+  addNarration('但你没注意到——他的目光扫过你的手腕，在你掌心停留了一瞬。');
+  
+  showChoices([
+    {
+      text: '「好玩！我买了一块石头，特别圆。」',
+      result: '他笑了，伸手替你拂去肩上落花。指尖碰到你耳垂。你缩了一下脖子。他手停住，停在半空，然后慢慢收回去。他没有道歉，只说「早点休息」。你走后，他看着自己的手指，站了很久。',
+      effect: () => changeAffection('shenhuaizhou', 8),
+      next: scene_c3_night
+    },
+    {
+      text: '「遇到一个奇怪的摊主，叫慕长离。」',
+      result: '他端着茶杯的手指微微收紧。「……慕长离。」他念了一遍这个名字，笑容不变，「离他远点。」你注意到他袖口有墨迹——是练字时沾的。他每天写一张「平安」，写了一个月。',
+      effect: () => { changeAffection('shenhuaizhou', 13); state.flags.metSu = true; },
+      next: scene_c3_night
+    },
+    {
+      text: '「还行。大师兄，你等很久了吗？」',
+      result: '他愣了一下，低头看了看手里的凉茶。然后他笑了，把那杯茶倒掉，重新泡了一杯。你问他每天等在这里做什么，他没答，只说「顺手泡茶」。',
+      effect: () => changeAffection('shenhuaizhou', 15),
+      next: scene_c3_night
+    }
+  ]);
+}
+
+function scene_c3_night() {
+  addNarration('');
+  addNarration('那天夜里，你又梦到了那个血瞳的男人。');
+  addNarration('他站在一片桃花林中，背对着你。');
+  addDialogue('???', '你今天下山了。', 'lihanyuan');
+  addNarration('他的声音没有起伏。');
+  addDialogue('???', '那个人……离他远点。', 'lihanyuan');
+  addNarration('你想问他「为什么」，但梦里的桃花忽然落了满地。他转过身，血瞳里映着你的脸。');
+  addDialogue('厉寒渊', '……你听到没有。', 'lihanyuan');
+  
+  showChoices([
+    {
+      text: '「你是在关心我吗？」',
+      result: '他愣住。血瞳里的冷意碎了一瞬。「……我只是不想你被骗。」',
+      effect: () => changeAffection('lihanyuan', 20),
+      next: scene_c3_end
+    },
+    {
+      text: '「你为什么会在我的梦里？」',
+      result: '他沉默了很久。「因为你每天在后山练剑。我在那道残痕里，留了一缕神识。」',
+      effect: () => changeAffection('lihanyuan', 18),
+      next: scene_c3_end
+    },
+    {
+      text: '「你管得太多了。」',
+      result: '他笑了。那笑容又冷又苦。「是啊。我管得太多了。三百年前，我也管得太多。」',
+      effect: () => changeAffection('lihanyuan', 10),
+      next: scene_c3_end
+    }
+  ]);
+}
+
+function scene_c3_end() {
+  addNarration('');
+  addNarration('梦醒了。你睁开眼，发现枕边多了一枝桃花。');
+  addNarration('花瓣上还沾着露水。这个时节，东峰的桃花早就谢了。');
+  addNarration('');
+  addNarration('——此幕暂歇·梦醒桃枝——');
+  
+  setTimeout(() => {
+    state.chapter = 4;
+    grantActionPoints(3);
+    showFreeAction(scene_chapter4_start, '——秘境在即，最后整理心境——');
+  }, 2500);
+}
+
+// ==================== 第四章 ====================
+function scene_chapter4_start() {
+  clearText();
+  setChapterBg(4);
+  addNarration('宗门大比之后，你被派往一处秘境试炼。');
+  addNarration('秘境深处，魔气浓郁。你迷了路。');
+  addNarration('四周的魔物越来越多，你的剑越来越沉。');
+  addNarration('最后，你被逼到了一处悬崖边。');
+  addNarration('');
+  addNarration('魔物逼近。你握紧剑，声音在抖，但没有退——');
+  addDialogue(state.playerName, '我是昆仑仙宗弟子！');
+  addNarration('');
+  addNarration('话音刚落，天色暗了。');
+  addNarration('一股铺天盖地的魔气从悬崖下涌上来，将魔物瞬间碾碎。');
+  addNarration('你抬头。');
+  addNarration('');
+  addNarration('一个人影从魔气中走出来。');
+  addNarration('玄衣，血瞳，周身魔气翻涌，右手魔纹如荆棘缠绕。');
+  addNarration('他站在你面前三丈之外，居高临下地看着你。');
+  addNarration('你认出了那双眼睛——梦里的那双。');
+  addNarration('');
+  addNarration('他的目光从你脸上移开，落在你握剑的姿势上。');
+  addNarration('然后，他停住了。');
+  addNarration('');
+  addDialogue('厉寒渊', '三百年了……还有昆仑弟子，敢这么干净地活着。', 'lihanyuan');
+  addNarration('他的声音很低，像从深渊里传上来。');
+  addNarration('他转身要走。走了几步，又停下。');
+  addNarration('他没有回头。');
+  addDialogue('厉寒渊', '……东峰的剑法，练歪了。手腕太紧。明天这个时辰，还来这里。我教你。', 'lihanyuan');
+  
+  showChoices([
+    {
+      text: '「等一下！你是谁？」',
+      result: '他侧过头，血瞳扫了你一眼。「你每天在后山跟空气说话，不知道我是谁？」语气很冷。',
+      effect: () => changeAffection('lihanyuan', 12),
+      next: scene_c4_talk
+    },
+    {
+      text: '「你……你的手在流血。」',
+      result: '他愣了一下。低头看了一眼右手——三百年前被逐出师门时留下的旧伤，早已结疤，但他一直没治。你没说「血魔尊」，也没问「你是魔道中人吗」，你只看到伤口。他没说话，只是把手往身后藏了一下。',
+      effect: () => changeAffection('lihanyuan', 18),
+      next: scene_c4_talk
+    },
+    {
+      text: '（握紧剑，不说话）',
+      result: '他看了你很久，然后笑了。那笑容里没有恶意，只有一种很深的疲惫。「……胆子倒是比剑法大。」',
+      effect: () => changeAffection('lihanyuan', 8),
+      next: scene_c4_talk
+    }
+  ]);
+}
+
+function scene_c4_talk() {
+  addNarration('');
+  addNarration('第二天夜里，你又去了后山。');
+  addNarration('他已经在练剑台上等着了。');
+  addNarration('他没有教你怎么出剑。他只是让你反复练一个最简单的动作——起手式。');
+  addNarration('');
+  addDialogue('厉寒渊', '你练了三个月，连起手式都没练对。', 'lihanyuan');
+  addDialogue(state.playerName, '……我资质差。');
+  addDialogue('厉寒渊', '资质差才要练。资质好的人，懒得练这个。', 'lihanyuan');
+  addNarration('他的语气很冷淡，但纠正你手腕角度的时候，动作很轻。');
+  addNarration('');
+  addNarration('你注意到，他的右手手背上有一道很深的旧疤。');
+  addNarration('你忍不住问——');
+  
+  showChoices([
+    {
+      text: '「师兄，你的手……是怎么伤的？」',
+      result: '他低头看着那道疤，沉默了很久。「被人冤枉的时候，自己划的。想证明……我没做过。」他没看你，「后来发现，没人看。」语气很平，像是说别人的事。',
+      effect: () => changeAffection('lihanyuan', 16),
+      next: scene_c4_deeper
+    },
+    {
+      text: '「师兄，你恨昆仑吗？」',
+      result: '他笑了，那笑容很淡。「恨。」他顿了顿，看着你，「但你穿着昆仑的衣服。你穿着它的时候……我就下不了手了。」',
+      effect: () => changeAffection('lihanyuan', 14),
+      next: scene_c4_deeper
+    },
+    {
+      text: '「师兄，你教我剑法，我教你一件事好不好？」',
+      result: '他挑了挑眉。「什么？」你说：「下次手受伤了，要包扎。不要自己划。」他愣了很久，然后别过头，声音很轻：「……你管得真宽。」',
+      effect: () => changeAffection('lihanyuan', 18),
+      next: scene_c4_deeper
+    }
+  ]);
+}
+
+function scene_c4_deeper() {
+  addNarration('');
+  addNarration('那之后，他每晚都在后山等你。');
+  addNarration('你的剑法突飞猛进。');
+  addNarration('但他从来不提自己的身份。你也从来不问。');
+  addNarration('你们之间有一种奇怪的默契——他不说，你不问。');
+  addNarration('');
+  addNarration('有一天夜里，你练完剑，发现他靠在桃树上，闭着眼。');
+  addNarration('月光照在他脸上，魔纹隐隐发光。他看起来很累。');
+  addNarration('你走近了一步。他忽然开口，声音很轻——');
+  addDialogue('厉寒渊', '别走。', 'lihanyuan');
+  addNarration('他在说梦话。');
+  addDialogue('厉寒渊', '……别丢下我。', 'lihanyuan');
+  addNarration('像个孩子。');
+  addNarration('');
+  addNarration('你站在那里，很久没有动。');
+  
+  showChoices([
+    {
+      text: '（轻轻替他盖上外袍）',
+      result: '你刚把外袍搭在他身上，他就醒了。他盯着外袍看了很久，问「谁让你碰我东西」。语气很冷。你说「你冷」。他没再说话，但把外袍裹紧了，一直裹到天亮。',
+      effect: () => changeAffection('lihanyuan', 16),
+      next: scene_c4_morning
+    },
+    {
+      text: '（坐在他身边，等他醒）',
+      result: '你坐在他身边，看了一整夜的桃花。他醒来时，发现你靠在他肩上睡着了。他没有动，保持那个姿势直到天亮——嘴上没说什么，但没推开你。',
+      effect: () => changeAffection('lihanyuan', 14),
+      next: scene_c4_morning
+    },
+    {
+      text: '（悄悄离开）',
+      result: '你悄悄走了。但走出几步，身后传来他的声音：「……你走了。」很轻，像是习惯了。',
+      effect: () => changeAffection('lihanyuan', 7),
+      next: scene_c4_morning
+    }
+  ]);
+}
+
+function scene_c4_morning() {
+  addNarration('');
+  addNarration('天亮时，你回到住处。');
+  addNarration('推开门，发现桌上多了一封信。没有署名，但信封上的火漆是一朵桃花。');
+  addNarration('你拆开信，里面只有一行字——');
+  addNarration('');
+  addNarration('「昨晚的月亮很好。下次一起看。」');
+  addNarration('');
+  addNarration('你认出了那个字迹——和窗台上点心下的纸条，一模一样。');
+  addNarration('');
+  addNarration('你正出神，门外传来脚步声。');
+  addNarration('——是师尊容昭。');
+  addNarration('他站在门口，白色长发上沾着夜露。他看着你，冰蓝眼睛里有什么在翻涌。');
+  addNarration('你忽然意识到——他一夜没睡。');
+  
+  setTimeout(() => scene_c4_rongzhao(), 2500);
+}
+
+function scene_c4_rongzhao() {
+  addNarration('');
+  addDialogue('容昭', '……回来就好。', 'rongzhao');
+  addNarration('声音很轻，像怕惊碎什么。');
+  addNarration('你从未见过他这样。三千年来，所有人都说他冷得像冰，可此刻你分明看到——冰下面，有什么在烧。');
+  addNarration('他转身要走，走到门口又停下。他没有回头。');
+  addDialogue('容昭', '秘境的事……以后，不要一个人去。', 'rongzhao');
+  addNarration('这是他说过最长的话之一。');
+  
+  showChoices([
+    {
+      text: '「师尊，我回来了。让您担心了。」',
+      result: '他站在殿门口，什么都没说，只是看了你一眼。你注意到他左手攥着袖口，指节发白。你叫他「师尊」，他松开了手。「……嗯。」',
+      effect: () => changeAffection('rongzhao', 18),
+      next: scene_c4_rongzhao_deeper
+    },
+    {
+      text: '「师尊，我在秘境遇到了厉寒渊。他没有伤我。」',
+      result: '他翻书的手停了一瞬。很久，他说：「……我知道。」他抬头看你，冰蓝眼睛里有什么在碎，「他若伤你，我必屠魔宫。」',
+      effect: () => changeAffection('rongzhao', 16),
+      next: scene_c4_rongzhao_deeper
+    },
+    {
+      text: '（什么都不说，只是站在他身边）',
+      result: '他没有赶你走。你们就这样站着，看了一整夜的天。天亮时，他轻声说了一句：「……以后，别让我等。」',
+      effect: () => changeAffection('rongzhao', 15),
+      next: scene_c4_rongzhao_deeper
+    }
+  ]);
+}
+
+function scene_c4_rongzhao_deeper() {
+  addNarration('');
+  addNarration('他忽然起身，走到窗边。晨光落在他白色长发上，像落了一层雪。');
+  addNarration('他背对着你，声音很低——');
+  addDialogue('容昭', '三百年前，我送走他的时候……也是这样的天光。', 'rongzhao');
+  addNarration('你愣住。这是他第一次主动提起那件事。');
+  addDialogue('容昭', '我选择了沉默。我以为沉默是对的。后来才发现，有些话，不说就来不及了。', 'rongzhao');
+  addNarration('他转过身，冰蓝眼睛看着你。');
+  addDialogue('容昭', '……你让我想起这件事。', 'rongzhao');
+  
+  showChoices([
+    {
+      text: '「师尊，你想说什么，我听着。」',
+      result: '他看着你，很久。然后他走过来，伸手，极轻地碰了碰你的头发。指尖很凉，但你的心却烫了一下。他很快收回手，像是被烫到。「……去睡吧。」',
+      effect: () => changeAffection('rongzhao', 16),
+      next: scene_c4_end
+    },
+    {
+      text: '「师尊，不管发生什么，我都不会走。」',
+      result: '他愣住。冰蓝眼睛里有什么在化。他张了张嘴，最终什么都没说。但他送你到了门口，手在门框上停了很久。',
+      effect: () => changeAffection('rongzhao', 18),
+      next: scene_c4_end
+    },
+    {
+      text: '（走上前，握住他的手）',
+      result: '他的手很凉。你握住的那一刻，他整个人僵住了。他没有抽回手。很久，他低头看着你们交握的手，声音哑得不像他：「……你的手，很暖。」——对容昭而言，肢体接触是重大突破。',
+      effect: () => changeAffection('rongzhao', 22),
+      next: scene_c4_end
+    }
+  ]);
+}
+
+function scene_c4_end() {
+  addNarration('');
+  addNarration('你回到住处，发现窗台上多了一支白梅。');
+  addNarration('花瓣上还沾着露水。这个时节，白梅早已谢了。');
+  addNarration('你低头，发现花枝下压着一张纸条，字迹清隽——');
+  addNarration('');
+  addNarration('「我在。」');
+  addNarration('');
+  
+  // 好感解锁的额外肉感场景
+  setTimeout(() => {
+    if (state.affection.rongzhao >= 70) {
+      scene_c4_rongzhao_night();
+    } else if (state.affection.shenhuaizhou >= 70) {
+      scene_c4_yunzhou_medicine();
+    } else if (state.affection.lihanyuan >= 75) {
+      scene_c4_lihanyuan_sword();
+    } else if (state.affection.muchangli >= 45) {
+      scene_c4_muchangli_mark();
+    } else {
+      finishChapter4();
+    }
+  }, 1800);
+}
+
+// 容昭·书房夜（好感≥70）
+function scene_c4_rongzhao_night() {
+  addNarration('');
+  addNarration('那天夜里，你在师尊书房看书，困了，趴在桌上。');
+  addNarration('迷迷糊糊间感觉有人在看你。你睁眼，他坐在对面，冰蓝眼睛映着烛火。');
+  addDialogue('容昭', '醒了就回去。', 'rongzhao');
+  addNarration('你坐直了。他忽然伸手，指尖碰了碰你发尾。就一下。然后收回手。');
+  addNarration('指尖有一点温度。');
+  addNarration('你走到门口。他在身后开口——');
+  addDialogue('容昭', '明天……还来吗。', 'rongzhao');
+  addNarration('不是问句。');
+  
+  setTimeout(() => finishChapter4(), 2200);
+}
+
+// 沈怀舟·上药（好感≥70）
+function scene_c4_yunzhou_medicine() {
+  addNarration('');
+  addNarration('你从秘境回来，身上有伤。沈怀舟替你上药。');
+  addNarration('他的手指从你手腕慢慢移到手臂，到肩膀。他停下来，掌心覆在你肩上，很烫。');
+  addDialogue(state.playerName, '大师兄……');
+  addDialogue('沈怀舟', '嗯。', 'shenhuaizhou');
+  addNarration('他没动。');
+  addDialogue('沈怀舟', '疼吗？', 'shenhuaizhou');
+  addDialogue(state.playerName, '不疼。');
+  addNarration('他手指收紧了一点。');
+  addDialogue('沈怀舟', '我疼。', 'shenhuaizhou');
+  addNarration('你转头看他。他低头，嘴唇贴在你肩头，很轻，像碰了一下就收回去。他说「早点睡」然后走了。门关上时，你听到门外一声很低的叹息。');
+  changeAffection('shenhuaizhou', 13);
+  
+  setTimeout(() => finishChapter4(), 2200);
+}
+
+// 厉寒渊·练剑贴背（好感≥75）
+function scene_c4_lihanyuan_sword() {
+  addNarration('');
+  addNarration('那晚他纠正你剑势时，从背后握住你的手。');
+  addNarration('他的胸膛贴着你后背，呼吸在你耳侧。你手腕一抖，他握得更紧。');
+  addDialogue('厉寒渊', '别动。', 'lihanyuan');
+  addDialogue(state.playerName, '你太近了。');
+  addNarration('他沉默了一瞬。');
+  addDialogue('厉寒渊', '那又怎样。', 'lihanyuan');
+  addNarration('他没松手。他的拇指按在你手腕内侧，那里血管跳得很快。他低头，鼻尖碰到你后颈。你僵住了。');
+  addNarration('他顿了一下，退开半步，声音比平时哑——');
+  addDialogue('厉寒渊', '今天练到这里。', 'lihanyuan');
+  addNarration('你回头看他，他的血瞳比平时更深。他转身走了，魔气在他身边翻涌得不太稳。');
+  
+  setTimeout(() => finishChapter4(), 2200);
+}
+
+// 慕长离·手腕印记（好感≥45）
+function scene_c4_muchangli_mark() {
+  addNarration('');
+  addNarration('那夜你梦到了青丘边缘。慕长离站在桃花树下。');
+  addDialogue(state.playerName, '你怎么在这？');
+  addDialogue('慕长离', '路过。', 'muchangli');
+  addNarration('他伸手碰你手腕内侧——那里有一道淡淡的狐尾印记。你缩手，他攥住了。');
+  addDialogue('慕长离', '你知道这是什么吗。', 'muchangli');
+  addDialogue(state.playerName, '不知道。');
+  addNarration('他笑了。');
+  addDialogue('慕长离', '骗你的。你不知道也好。', 'muchangli');
+  addNarration('他松开手。你低头看，手腕上又多了一道印记——比之前那道更深。');
+  changeAffection('muchangli', 29);
+  
+  setTimeout(() => finishChapter4(), 2200);
+}
+
+function finishChapter4() {
+  addNarration('');
+  addNarration('——此幕暂歇·秘境归来——');
+  state.chapter = 5;
+  setTimeout(() => {
+    // 终章前最后行动点：补足好感/灵力的机会
+    grantActionPoints(3);
+    showFreeAction(scene_chapter5_start, '——风起前夜，最后再走一走——');
+  }, 2500);
+}
+
+// ==================== 第五章 ====================
+function scene_chapter5_start() {
+  clearText();
+  setChapterBg(5);
+  addNarration('数月后，三界动荡。');
+  addNarration('魔界大军压境，妖界异动。仙道四峰倾巢而出，准备迎战。');
+  addNarration('而东峰——被推到了风口浪尖。');
+  addNarration('');
+  addNarration('因为魔界大军的主帅，是三百年前东峰的叛徒。');
+  addNarration('因为妖界的狐尊，近日频繁出现在昆仑附近。');
+  addNarration('因为东峰的弟子，和这些「敌人」有说不清的关系。');
+  
+  // 厉寒渊强制爱节点（好感≥80触发）
+  if (state.affection.lihanyuan >= 80) {
+    setTimeout(() => scene_c5_lihanyuan_force(), 2000);
+  } else {
+    setTimeout(() => scene_c5_council(), 2000);
+  }
+}
+
+// 厉寒渊·修罗场前夜强制爱（好感≥80）
+function scene_c5_lihanyuan_force() {
+  addNarration('');
+  addNarration('议事前夜。你独自在房中。');
+  addNarration('门被推开。他站在门口，带着酒气。血瞳比平时更红，魔纹从手腕蔓延到颈侧。');
+  addDialogue(state.playerName, '师兄，你喝多了。');
+  addDialogue('厉寒渊', '没有。', 'lihanyuan');
+  addNarration('他走过来，把你按在墙上。掌心贴着你后颈的魔纹，指腹用力摩挲。');
+  addDialogue('厉寒渊', '我清醒得很。我知道你是谁。知道你在哪。知道你今天见了谁。', 'lihanyuan');
+  addNarration('他另一只手从你腰侧滑到后腰，把你往他怀里按。他呼吸很重，嘴唇蹭过你耳廓——');
+  addDialogue('厉寒渊', '你要选谁都可以。选沈怀舟，选容昭，选那只狐狸——都行。', 'lihanyuan');
+  addNarration('他声音忽然低下去，低到像从胸腔里挤出来的——');
+  addDialogue('厉寒渊', '但今晚，你得在我这里。', 'lihanyuan');
+  addNarration('他低头咬住你肩膀。不重，但留了牙印。他松开嘴，用嘴唇碰了碰那个印记。然后他抱着你，抱得很紧，紧到你有点喘不过气。');
+  addNarration('他没有做别的。只是抱着你，下巴搁在你头顶，一整夜没松手。');
+  addNarration('天亮时他说了一句话，声音哑得几乎听不见——');
+  addDialogue('厉寒渊', '你走了，我就当今晚什么都没发生。你留下……我就当你是我的了。', 'lihanyuan');
+  
+  setTimeout(() => scene_c5_council(), 2800);
+}
+
+function scene_c5_council() {
+  addNarration('');
+  addNarration('你被叫到了议事大殿。');
+  addNarration('仙道四峰的峰主围坐在你面前。');
+  addNarration('他们的目光，像刀。');
+  addNarration('');
+  addNarration('就在这时，殿门被推开了。');
+  addNarration('四个人，同时走了进来。');
+  addNarration('');
+  addNarration('沈怀舟——月白道袍，眉眼温和，站在你身侧。');
+  addNarration('厉寒渊——玄衣血瞳，魔气翻涌，站在殿门口，没有进来。');
+  addNarration('容昭——白色长发，冰蓝眼睛，坐在主位上，没有看任何人。');
+  addNarration('慕长离——银发异瞳，懒洋洋地靠在柱子上，嘴角带笑。');
+  addNarration('');
+  addNarration('仙道四峰的峰主同时站了起来。');
+  addNarration('「厉寒渊！你竟敢——」');
+  addNarration('');
+  addDialogue('厉寒渊', '我来接我的师妹。', 'lihanyuan');
+  addDialogue('慕长离', '我来接我的小摊友。', 'muchangli');
+  addDialogue('沈怀舟', '……师妹，别怕。', 'shenhuaizhou');
+  addNarration('容昭没有说话。他只是看了你一眼。');
+  addNarration('冰蓝色的眼睛里，有什么东西在翻涌。');
+  addNarration('');
+  addNarration('所有人都在等你开口。');
+  addNarration('你深吸一口气——');
+  
+  showChoices([
+    { text: '「我选沈怀舟。」', next: () => ending_check('shenhuaizhou') },
+    { text: '「我选厉寒渊。」', next: () => ending_check('lihanyuan') },
+    { text: '「我选容昭。」', next: () => ending_check('rongzhao') },
+    { text: '「我选慕长离。」', next: () => ending_check('muchangli') },
+    { text: '「……我谁都不选。」', next: () => ending_check('none') }
+  ]);
+}
+
+// ==================== 结局判定 ====================
+function ending_check(choice) {
+  clearText();
+  
+  const highAff = Object.entries(state.affection).filter(([k, v]) => v >= 61);
+  
+  if (choice !== 'none' && state.affection[choice] >= 61) {
+    showEnding(choice, state.affection[choice] >= 81 ? 'HE' : 'BE');
+    return;
+  }
+  
+  if (highAff.length >= 2) {
+    showEnding('harem', 'HE');
+    return;
+  }
+  
+  if (highAff.length === 1) {
+    showEnding(highAff[0][0], highAff[0][1] >= 81 ? 'HE' : 'BE');
+    return;
+  }
+  
+  showEnding('alone', 'BE');
+}
+
+// ==================== 结局展示 ====================
+function showEnding(type, grade) {
+  const screen = document.getElementById('ending-screen');
+  const title = document.getElementById('ending-title');
+  const text = document.getElementById('ending-text');
+  
+  let titleStr = '';
+  let textStr = '';
+  
+  if (type === 'shenhuaizhou') {
+    if (grade === 'HE') {
+      titleStr = '沈怀舟 · 桃之夭夭';
+      textStr = `
+        <p>东峰的桃树全被他亲手砍了。他用那些桃树干围了一座院子，只留一扇门。</p>
+        <p>他每天给你送饭，每天给你梳头，每晚坐在你床边看你睡着才走。</p>
+        <p>有一天晚上，你装睡。他看了你一整夜，什么都没做，只是看着。天亮时，他低头，在你额头上轻轻碰了一下。</p>
+        <p>你睁开眼，抓住他的手腕。他僵住，耳根瞬间红了。</p>
+        <p>你把他拉下来。桃花瓣从窗外飘进来，落在你肩头。他低头吻掉那片花瓣，然后一路向下。</p>
+        <p>“大师兄……你手在抖。”</p>
+        <p>“嗯。”</p>
+        <p>“你怕什么？”</p>
+        <p>“怕你后悔。”</p>
+        <p>你伸手，按在自己心口。他的手掌覆在你手背上，感受到你同样急促的心跳。</p>
+        <p>“我不后悔。”</p>
+        <p>那一夜，院子里的桃树桩，全部发了新芽。</p>
+        <p style="color:#f0d080;margin-top:20px;">—— 桃之夭夭，灼灼其华。之子于归，宜其室家。</p>
+      `;
+    } else {
+      titleStr = '沈怀舟 · 桃夭空落';
+      textStr = `
+        <p>东峰的桃树全被他砍了。他用那些桃树干围了一座院子，只留一扇门。</p>
+        <p>他每天给你送饭，每天给你梳头，每晚坐在你床边看你睡着才走。</p>
+        <p>但他看你的眼神，始终隔着一层。</p>
+        <p>有一天他问你：“你在这里……开心吗？”</p>
+        <p>你沉默了很久，说：“大师兄，你开心吗？”</p>
+        <p>他愣住。</p>
+        <p>那天夜里，他靠着门板坐在地上，额头抵着门，声音又低又哑：“师妹……你能不能……看看我。”</p>
+        <p>门里没有声音。他笑了，笑得很难看。</p>
+        <p>院子里的桃树桩，始终没有发新芽。</p>
+        <p style="color:#f0d080;margin-top:20px;">—— 桃之夭夭，其叶蓁蓁。但他等的人，心不在此。</p>
+      `;
+    }
+  } else if (type === 'lihanyuan') {
+    if (grade === 'HE') {
+      titleStr = '厉寒渊 · 九渊归月';
+      textStr = `
+        <p>魔宫最深处，有一座宫殿。宫殿是按照东峰的模样建的——桃花是假的，木头刷了粉色。</p>
+        <p>她推开门的那一刻，他站在门边，像个等夸奖的孩子：“师兄就是你的家。”</p>
+        <p>她住在魔宫里。他每天早晨在窗台放一杯茶。第三天，她喝了。</p>
+        <p>有一天，她练剑时被魔气反噬。他赶到时她倒在血泊中。他抱着她冲进寝殿，一边渡魔气一边喊她名字。</p>
+        <p>她醒来时，他坐在床边，血瞳通红。</p>
+        <p>“师兄，我没事。”</p>
+        <p>他忽然俯身，把她按进床褥里。力气很大，她整个人陷进被褥中。他的声音哑得像砂纸：</p>
+        <p>“你知不知道我刚才有多怕。”</p>
+        <p>他吻她。很重，很急，带着三百年的孤独和恐惧。她的嘴唇被他咬破了，铁锈味在两人唇间蔓延。</p>
+        <p>她伸手环住他的脖子，手指划过他后背的魔纹。他闷哼一声，魔纹瞬间从后背蔓延至全身，像荆棘疯长。</p>
+        <p>“师妹……你现在说停，还来得及。”</p>
+        <p>她没有说话。她伸手，解开了他的衣带。</p>
+        <p>那一夜，魔宫的假桃花全落了。但东峰后山的真桃花，开了。</p>
+        <p style="color:#f0d080;margin-top:20px;">—— 九渊归月，深渊独宠。三百年黑暗，唯你是光。</p>
+      `;
+    } else {
+      titleStr = '厉寒渊 · 九渊独沉';
+      textStr = `
+        <p>魔宫最深处，有一座宫殿。宫殿是按照东峰的模样建的——桃花是假的，木头刷了粉色。</p>
+        <p>她住在魔宫里。他每天早晨在窗台放一杯茶。她不喝，他也不收。</p>
+        <p>他每晚入她梦里。不做什么，只是坐在她身边看她练剑。</p>
+        <p>有一天她问：“师兄，你为什么不直接杀了我？你恨昆仑。”</p>
+        <p>他沉默了很久，说：“你是昆仑唯一没脏的人。”</p>
+        <p>她说：“可你把我关在这里……我和那些被你杀的人，有什么区别？”</p>
+        <p>他愣住。</p>
+        <p>那一夜，他站在魔宫最高处，看了一整夜的假桃花。</p>
+        <p>第二天，他把她的魔纹解了。“你走吧。”</p>
+        <p>她没有走。“你花了三百年建了一座牢笼。我也想看看，牢笼外面是什么。”</p>
+        <p>他看着她，血瞳里有什么在翻涌。他伸出手，停在半空，最终还是收了回去。</p>
+        <p>“……好。”</p>
+        <p style="color:#f0d080;margin-top:20px;">—— 九渊独沉，月照空城。她留下来了，但心，他始终没能确定。</p>
+      `;
+    }
+  } else if (type === 'rongzhao') {
+    if (grade === 'HE') {
+      titleStr = '容昭 · 雪落无声';
+      textStr = `
+        <p>他在东峰后山建了一座冰室。没有窗户，四面都是冰。冰室里有一张暖玉床。墙角有一面冰镜，镜子里映着外面的雪景。</p>
+        <p>他每天来看她，不说话，只是坐在冰镜前看雪。</p>
+        <p>有一天她装睡。他看了她很久，然后走过来，坐在床边。他伸手，指尖轻轻碰了碰她的眉心。很凉，但很轻。</p>
+        <p>她睁开眼，握住他的手腕。</p>
+        <p>他愣住，冰蓝眼睛里有什么在翻涌。</p>
+        <p>她把他拉下来。他整个人压在她身上，手忙脚乱地撑住床沿，白色长发散在她脸颊两侧。她伸手环住他的脖子，手指插进他发间。</p>
+        <p>“师尊……”</p>
+        <p>他低头，吻了她。很轻，像冰花落在唇上，然后融化。她咬了一下他的下唇，他闷哼一声，吻变得重了。</p>
+        <p>冰镜里的画面变了——映出床上的两个人。他看见了，但没有关掉。</p>
+        <p>“让镜子记住。”他说，声音哑得不像他，“三百年……我唯一没沉默的一次。”</p>
+        <p>那一夜，冰室融了。冰变成水，水变成桃花。整个冰室变成了一片桃林。</p>
+        <p style="color:#f0d080;margin-top:20px;">—— 雪落无声，大道予你。万年冰山，只为你一人融化。</p>
+      `;
+    } else {
+      titleStr = '容昭 · 雪落空寂';
+      textStr = `
+        <p>他在东峰后山建了一座冰室。没有窗户，四面都是冰。冰室里有一张暖玉床。墙角有一面冰镜，镜子里映着外面的雪景。</p>
+        <p>他每天来看她，不说话，只是坐在冰镜前看雪。</p>
+        <p>她坐在床上看他的背影。白色长发垂在冰面上，像一幅画。</p>
+        <p>有一天她问：“师尊，你为什么不让我出去？”</p>
+        <p>他沉默很久，说：“三百年前，我师父做了一件事。我选择了沉默。”</p>
+        <p>他转头看她，冰蓝眼睛里有什么在化：“三百年后，我不想再沉默了。”</p>
+        <p>她问：“你把我关在这里……是不想沉默，还是不想面对？”</p>
+        <p>他愣住。</p>
+        <p>那天夜里，他站在冰镜前看了一整夜的雪。</p>
+        <p>第二天，她发现冰镜里的画面变了。镜子里映着东峰的每一个角落。她说：“可你把自己也关在这里了。”</p>
+        <p>他沉默。</p>
+        <p>她走到冰镜前，伸手，在冰面上呵了一口气。雾气模糊镜面。她在雾气上画了一扇门。</p>
+        <p>“师尊，你跟我一起出去。”</p>
+        <p>他看着那扇门，看了很久。然后他笑了。三百年来第一次笑。</p>
+        <p>他伸手，融了那扇门。但门外的雪，还在下。</p>
+        <p>她走出去了。他站在门内，没有跟。</p>
+        <p style="color:#f0d080;margin-top:20px;">—— 雪落无声，空寂满城。她走了，他留在冰里。</p>
+      `;
+    }
+  } else if (type === 'muchangli') {
+    if (grade === 'HE') {
+      titleStr = '慕长离 · 青丘长囚';
+      textStr = `
+        <p>青丘。桃花永不凋零——整座青丘都是他的妖力所化。</p>
+        <p>他每天给她画一幅画。三天后，墙上挂满了她的样子。</p>
+        <p>有一天她发现一间密室。里面全是画——她蹲在摊前的样子，她买石头的认真表情，她在灯会上被挤到的狼狈模样。每一张画上都写着日期。</p>
+        <p>他站在她身后，声音很轻：“你问我等了多久。我说三个月。其实从你蹲在我摊前那天开始，我就在画你了。画了三百六十四张。今天是第三百六十五张。”</p>
+        <p>她转身，伸手拉住他一条尾巴。他闷哼一声，尾巴缠得更紧。</p>
+        <p>“慕长离——你尾巴缠太紧了。”</p>
+        <p>“你忍一下。”他笑了，异色瞳在月光下金紫交织，“三千年的桃花，一夜开完……我也忍了很久了。”</p>
+        <p>九条尾巴从四面八方缠上来，把她整个人裹住。他低头，嘴唇贴着她后颈的狐尾印记，声音又低又哑：</p>
+        <p>“你最近都没来找我。是不是不喜欢我了。”</p>
+        <p>“才三天。”</p>
+        <p>“三天还不够久吗。”</p>
+        <p>那一夜，青丘的桃花开到了人界。所有人都看到了——桃花从西边铺天盖地而来，像一场银色的雪。</p>
+        <p style="color:#f0d080;margin-top:20px;">—— 青丘长囚，千年等待。三千年风月，只为你一人疯魔。</p>
+      `;
+    } else {
+      titleStr = '慕长离 · 青丘空候';
+      textStr = `
+        <p>青丘。桃花永不凋零——整座青丘都是他的妖力所化。</p>
+        <p>他每天给她画一幅画。三天后，墙上挂满了她的样子。</p>
+        <p>他带她逛青丘，走到哪桃花开到哪。但她始终没有笑。</p>
+        <p>有一天他问她：“你不喜欢这里吗？”</p>
+        <p>她沉默很久，说：“慕长离，青丘很美。但美得像一场梦。”</p>
+        <p>他愣住。</p>
+        <p>她说：“梦总会醒的。”</p>
+        <p>那一夜，青丘的桃花全落了。三千年来第一次。</p>
+        <p>他站在落尽的桃林里，九条尾巴无力地垂着。她走过来，站在他身边。</p>
+        <p>“你为什么不走？”</p>
+        <p>“我在等梦醒。”</p>
+        <p>他看着她，异色瞳金紫交织。他说：“如果梦不醒呢？”</p>
+        <p>她说：“那你就跟我一起醒。”</p>
+        <p>他沉默很久，然后伸手，把她拉进怀里。九条尾巴缠上来，但很松。</p>
+        <p>“……好。”</p>
+        <p>但他知道，她的心，还在梦外。</p>
+        <p style="color:#f0d080;margin-top:20px;">—— 青丘空候，桃花空落。三千年等待，等来了一场梦。</p>
+      `;
+    }
+  } else if (type === 'harem') {
+    titleStr = '修罗场 · 四界倾心';
+    textStr = `
+      <p>四个人同时出现在东峰。你站在中间。</p>
+      <p>沈怀舟笑着去砍桃树，说要围个更大的院子。厉寒渊开始拆魔宫的墙，说要搬到东峰来。慕长离在桃林里种了九尾狐的幻术桃花。容昭看着被拆了一半的东峰，沉默很久，说了句“嗯”，然后开始修。</p>
+      <p>东峰重建了三次。最后容昭放弃修了，说“随你们”。</p>
+      <p>四个人站在东峰之巅，同时看着你。</p>
+      <p>“东峰这么大，住不下四个人吗？”你笑了，“还是说——你们谁想睡地板？”</p>
+      <p>四人同时看向容昭。容昭沉默，说：“嗯。”</p>
+      <p>东峰重建了第四次。四座院子围着一座小楼。你住小楼。</p>
+      <p>每天晚上，四个人会不约而同地出现在小楼下。</p>
+      <p>有一天你站在楼上，看着四个人：“今天谁上来？”</p>
+      <p>四人同时抬头。</p>
+      <p>“我说的是——谁上来帮我捏肩。”</p>
+      <p>四人同时迈步。容昭最快，他已经站在楼梯口了，冰蓝眼睛看着你，面无表情：“嗯。”</p>
+      <p>沈怀舟笑了，桃花眼弯弯的：“师尊，你腿真快。”</p>
+      <p>厉寒渊血瞳微眯：“师兄，你什么时候学会抢了。”</p>
+      <p>慕长离九条尾巴甩了甩：“我尾巴可以一起捏。”</p>
+      <p>你靠在栏杆上，看着四个人，笑了：“一起上来吧。我房间大。”</p>
+      <p>四人同时愣住。</p>
+      <p>然后东峰的小楼，灯亮了一整夜。</p>
+      <p style="color:#f0d080;margin-top:20px;">—— 四界倾心，仙魔道妖，共守一人。东峰，果然是个奇怪的地方。</p>
+    `;
+  } else if (type === 'alone') {
+    titleStr = '大道独行 · 大道无情';
+    textStr = `
+      <p>你谁都不选。</p>
+      <p>你闭关百年，成化神修士。</p>
+      <p>百年后，你出关。</p>
+      <p>东峰的桃树还在开。沈怀舟坐在桃树下，一个人泡茶。茶杯是两只，但只有他一个人喝。</p>
+      <p>魔宫的假桃花还在。厉寒渊站在窗前，窗台上放着两杯茶。茶凉了，没人喝。</p>
+      <p>东峰后山的冰室还在。容昭坐在冰镜前，镜子里映着东峰的桃林。桃林里没有人。</p>
+      <p>青丘的桃花还在开。慕长离坐在密室里，墙上三千张画。他还在画，第三百零一张。画的是你闭关那天的背影。</p>
+      <p>你站在东峰之巅，看着四个人。四个人同时抬头，看到了你。</p>
+      <p>你笑了笑，转身，飞升而去。</p>
+      <p>身后传来四声呼喊，被风吹散了。</p>
+      <p>“师妹——”</p>
+      <p>“师妹——”</p>
+      <p>“……”</p>
+      <p>“……”</p>
+      <p>你没有回头。</p>
+      <p>多年后，东峰的桃树枯了。魔宫的茶凉了。冰室的镜子碎了。青丘的桃花谢了。</p>
+      <p>但有人说，在某个无名山上，看到过一个白衣女子。她在那里种了一片桃林，养了一只白狐，手里总是拿着一本剑谱。</p>
+      <p>剑谱的最后一页，写着四个名字。</p>
+      <p>都被划掉了。</p>
+      <p style="color:#f0d080;margin-top:20px;">—— 大道无情，太上忘情。她选了大道，他们选了疯魔。</p>
+    `;
+  }
+  
+  title.textContent = titleStr;
+  text.innerHTML = textStr;
+  screen.style.display = 'flex';
+}
+
+// ==================== 开始/重启 ====================
+function startGame() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('game').style.display = 'flex';
+  document.getElementById('ending-screen').style.display = 'none';
+  updateCultPanel();
+  scene_prologue();
+}
+
+function restartGame() {
+  state = {
+    affection: { shenhuaizhou: 0, lihanyuan: 0, rongzhao: 0, muchangli: 0 },
+    flags: {},
+    chapter: 1,
+    playerName: '',
+    linggen: '五灵根',
+    daoPath: '凡尘道',
+    mainCult: '法修',
+    subCult: '采药',
+    origin: '凡人孤女',
+    constitutions: [],
+    weapon: '未得',
+    killer: '未觉',
+    weakness: '凡躯',
+    cultivation: {
+      boneAge: 14,
+      appearAge: 14,
+      lifespan: 120,
+      realm: '练气一层',
+      realmLevel: 1,
+      discipleRank: '杂役弟子',
+      lingli: 0,
+      lingliMax: 100,
+      swordArt: 0,
+      swordArtLevel: '入门',
+      years: 0,
+      freeActions: 1
+    }
+  };
+  updateAffectionUI();
+  updateCultPanel();
+  document.getElementById('cult-panel').style.display = 'none';
+  document.getElementById('ending-screen').style.display = 'none';
+  document.getElementById('start-screen').style.display = 'flex';
+  document.getElementById('game').style.display = 'none';
+}
+
+// ==================== 初始化 ====================
+createStars();
+createPetals();
+</script>
+</body>
+</html>
