@@ -1208,6 +1208,7 @@ let state = {
   mainCult: '法修',      // 主修方向
   subCult: '采药',       // 辅修
   origin: '凡人孤女',    // 出身背景
+  discipleType: '',      // 入门身份：personal 亲传 / registered 记名 / servant 杂役
   constitutions: [],     // 特殊体质（随机3个）
   // 身份卡：斗法设定
   weapon: '未得',        // 本命法宝
@@ -1365,6 +1366,45 @@ function getLingliMaxMultiplier() {
   return (lg.lingliMaxMul || 1) * ct.lingliMaxMul;
 }
 
+// ==================== 资质分档（决定拜师与初遇剧情） ====================
+// peerless 绝世：混沌/天/雷/冰/风 → 各峰争抢，可入容昭门下为亲传
+// medium   中庸：双/三灵根       → 外门记名，需勤勉方能立足
+// low      杂灵：四/五灵根       → 杂役弟子，容昭拒收，靠努力与机缘翻身
+function getTalentTier() {
+  const lg = LINGGEN_BONUS[state.linggen] || LINGGEN_BONUS['五灵根'];
+  if (lg.lingliMul >= 1.4) return 'peerless';
+  if (lg.lingliMul >= 0.85) return 'medium';
+  return 'low';
+}
+const TALENT_TIER_NAME = { peerless: '绝世之资', medium: '中庸之资', low: '杂灵凡资' };
+
+// 是否身具魔气/妖气（影响厉寒渊、慕长离初遇台词）
+function hasDemonQi() {
+  return state.origin === '魔门余孽' ||
+    state.constitutions.some(n => ['万古魔躯', '吞天魔体'].includes(n));
+}
+function hasFoxDemonBlood() {
+  return state.origin === '妖域遗孤' ||
+    state.constitutions.some(n => n === '天妖血脉');
+}
+
+// 设置入门弟子身份，同步弟子等级显示
+function setDiscipleType(type) {
+  state.discipleType = type;
+  updateDiscipleRank();
+}
+// 亲传身份不随境界考核滑落；记名/杂役走正常考核（努力可翻身）
+function updateDiscipleRank() {
+  const c = state.cultivation;
+  if (state.discipleType === 'personal') {
+    c.discipleRank = c.realmLevel >= 15 ? '太上长老' : '亲传弟子';
+  } else if (state.discipleType === 'registered' && c.realmLevel < 5) {
+    c.discipleRank = '记名弟子';
+  } else {
+    c.discipleRank = rankByRealm(c.realmLevel);
+  }
+}
+
 // 境界名称表（1-17：练气1-9 / 筑基 / 金丹 / 元婴 / 渡劫 / 大乘 / 飞升）
 const REALM_NAMES = [
   '练气一层','练气二层','练气三层','练气四层','练气五层','练气六层',
@@ -1469,10 +1509,11 @@ function checkBreakthrough() {
     c.lingliMax = curLingliMax();
     // 寿元随境界提升
     c.lifespan = lifespanByRealm(c.realmLevel, c.lifespan);
-    // 弟子等级重判
-    c.discipleRank = rankByRealm(c.realmLevel);
+    // 弟子等级重判（亲传/记名身份优先，杂役可凭修为翻身）
+    const oldRank = c.discipleRank;
+    updateDiscipleRank();
     showAffPopup('境界突破：' + c.realm + '！');
-    showAffPopup('弟子等级：' + c.discipleRank);
+    if (oldRank !== c.discipleRank) showAffPopup('弟子等级：' + c.discipleRank);
     // 突破奖励：行动点+1
     c.freeActions = Math.min(5, c.freeActions + 1);
     // 境界里程碑叙事（主线感）
@@ -1488,7 +1529,12 @@ function checkBreakthrough() {
       15: '飞升！云海翻涌，仙音隐隐。你踏入仙途之巅——'
     };
     if (milestone[c.realmLevel]) {
-      setTimeout(() => addNarration('【修炼里程碑】' + milestone[c.realmLevel]), 600);
+      setTimeout(() => {
+        addNarration('【修炼里程碑】' + milestone[c.realmLevel]);
+        if (c.realmLevel === 5 && state.discipleType === 'servant') {
+          addNarration('【杂役翻身】从杂役院到外门名册，你用坏的扫帚比别人摸过的剑还多。这一路，没有人替你走过。');
+        }
+      }, 600);
     }
     // 筑基期及以上：外表年龄驻颜
     if (c.realmLevel >= 10) {
@@ -1871,15 +1917,29 @@ function place_peachwood(cb) {
 }
 
 function place_study(cb) {
-  addNarration('你端着一杯茶去书房。门半掩，他在看书。');
-  addDialogue('容昭', '放桌上。', 'rongzhao');
+  const dt = state.discipleType;
   const r = Math.random();
-  if (r < 0.5) {
-    addNarration('你放下茶要走。他忽然开口：「……今天剑法练到第几页。」你答了。他没抬头，但翻书的手停了一瞬——他记下了。');
-    changeAffection('rongzhao', 5); addLingli(5); addSwordArt(3);
+  if (dt === 'servant') {
+    // 杂役线：只能到廊下洒扫、添茶，容昭从不开门
+    addNarration('你端着新沏的茶去书房，照例只能站在廊下。门紧闭着，里面传来翻书声。');
+    addDialogue('容昭', '放门口。', 'rongzhao');
+    if (r < 0.5) {
+      addNarration('你放下茶盘要走。门内忽然传出一句：「……废剑台的起手式，手腕再低半寸。」你愣住——你夜里偷练剑的事，他竟知道。');
+      changeAffection('rongzhao', 5); addLingli(5); addSwordArt(3);
+    } else {
+      addNarration('第二日你去收茶壶，壶下压着一卷手抄的入门诀要，字迹清峻，没有落款。你回头望了一眼紧闭的门，什么声音也没有。');
+      changeAffection('rongzhao', 6); addLingli(10);
+    }
   } else {
-    addNarration('你站了一会儿。他没赶你走。书翻到某一页时，他递给你：「这页，看完再走。」你接过——上面有他批注的字。');
-    changeAffection('rongzhao', 6); addLingli(10);
+    addNarration('你端着一杯茶去书房。门半掩，他在看书。');
+    addDialogue('容昭', '放桌上。', 'rongzhao');
+    if (r < 0.5) {
+      addNarration('你放下茶要走。他忽然开口：「……今天剑法练到第几页。」你答了。他没抬头，但翻书的手停了一瞬——他记下了。');
+      changeAffection('rongzhao', 5); addLingli(5); addSwordArt(3);
+    } else {
+      addNarration('你站了一会儿。他没赶你走。书翻到某一页时，他递给你：「这页，看完再走。」你接过——上面有他批注的字。');
+      changeAffection('rongzhao', 6); addLingli(10);
+    }
   }
   addYears(1);
   setTimeout(cb, 1800);
@@ -2108,59 +2168,169 @@ function scene_chapter1_intro() {
   };
   addNarration(lgText[state.linggen] || lgText['五灵根']);
   addNarration('');
-  addNarration('按宗门规矩，你被定为杂役弟子，分到了最冷清的东峰。');
-  addNarration('东峰之上，桃树成林，却无人打理。你走着走着，迷了路。');
-  
-  setTimeout(() => {
-    addNarration('');
-    addNarration('桃花深处，一把月白色的伞，撑开了。');
-    addDialogue('???', '你是新来的师妹？', 'shenhuaizhou');
-    addNarration('你抬头，看到一个穿着月白道袍的年轻男子。眉眼温和，笑起来像三月春风。');
-    addDialogue('沈怀舟', '我是东峰大弟子，沈怀舟。你迷路了？', 'shenhuaizhou');
-    
-    showChoices([
-      {
-        text: '「对不起，我迷路了……给你添麻烦了。」',
-        result: '他愣了一下。你道歉是因为你真的觉得给人添了麻烦，语气很自然，没有半分讨好。东峰弟子都敬畏他，同门都巴结他，可你只是把他当成一个被你打扰了的人。',
-        effect: () => changeAffection('shenhuaizhou', 12),
-        next: scene_c1_bridge
-      },
-      {
-        text: '「你是大师兄？那以后请多指教！」',
-        result: '他笑了笑，桃花眼弯弯的。但笑里有一丝很快散去的疏离——你用的是「师兄」这个身份，而非他这个人。',
-        effect: () => changeAffection('shenhuaizhou', 8),
-        next: scene_c1_bridge
-      },
-      {
-        text: '「我自己能找到路，不用麻烦你。」',
-        result: '他收起伞，看了你很久。你语气硬，却没有恶意。他没说话，只是把伞收进了袖中。',
-        effect: () => changeAffection('shenhuaizhou', 5),
-        next: scene_c1_bridge
-      }
-    ]);
-  }, 1500);
+
+  const tier = getTalentTier();
+
+  if (tier === 'peerless') {
+    // ===== 绝世之资：四峰争抢，唯独东峰无人问津 =====
+    addNarration('仙道四峰的峰主当场拍了桌子——抢人。');
+    addNarration('天灵峰许你真传之位，藏经阁对你敞开，丹药峰连结丹后的筑基丹都提前备下。');
+    addNarration('满堂的热闹里，只有一个位置空着——东峰。');
+    addNarration('没人指望东峰收人。那位容昭师尊，三百年没收过徒弟了。');
+    addNarration('你被一群长老围在中间，吵得头疼，抬头时却看见殿外桃树下站着个人。');
+    addNarration('月白道袍，撑一把素伞，像是替谁送名册路过，与满堂争抢隔着一层。');
+    setTimeout(() => {
+      addNarration('');
+      addNarration('那人也看见了你。桃花眼弯了弯，声音隔着雨幕传进来——');
+      addDialogue('沈怀舟', '人太多的路，不好走。东峰清静，要去看看吗？', 'shenhuaizhou');
+      addNarration('满殿忽然静了。一个杂役都没有的冷清破峰，也敢来抢绝世天才？');
+      showChoices([
+        {
+          text: '「……清静好。我跟你走。」',
+          result: '他愣了一下，大概没想到你真肯舍了四峰的厚遇。你走过人群时没有半分犹豫——你选的不是东峰，是那个在喧闹里唯独不抢你的人。',
+          effect: () => changeAffection('shenhuaizhou', 12),
+          next: scene_c1_bridge
+        },
+        {
+          text: '「你是谁？东峰……很强吗？」',
+          result: '他笑了：「东峰很破。师尊很凶。桃树很多。」他顿了顿，「但东峰的剑，是真的。」你从这句话里听出了别的东西——他说的是东峰，也是他自己。',
+          effect: () => changeAffection('shenhuaizhou', 8),
+          next: scene_c1_bridge
+        },
+        {
+          text: '「各峰都很好……可你为什么不抢？」',
+          result: '他收起伞，看了你很久。「天资是你的，不是我们拿来抢的东西。」满堂峰主的脸色都有些挂不住。你拎起包袱，走到了他伞下。',
+          effect: () => changeAffection('shenhuaizhou', 14),
+          next: scene_c1_bridge
+        }
+      ]);
+    }, 1500);
+  } else if (tier === 'medium') {
+    // ===== 中庸之资：外门弟子，误入桃林 =====
+    addNarration('按宗门规矩，你被登记为外门弟子，发了统一的灰青道袍。');
+    addNarration('无人争抢，也无人苛待。外门弟子数百人，你只是其中普通的一个。');
+    addNarration('听人说东峰的桃林最静，适合吐纳，你便往山上去。');
+    addNarration('东峰之上，桃树成林，岔路丛生。你走着走着，迷了路。');
+    setTimeout(() => {
+      addNarration('');
+      addNarration('桃花深处，一把月白色的伞，撑开了。');
+      addDialogue('???', '你是外门新来的师妹？', 'shenhuaizhou');
+      addNarration('你抬头，看到一个穿着月白道袍的年轻男子。眉眼温和，笑起来像三月春风。');
+      addDialogue('沈怀舟', '我是东峰大弟子，沈怀舟。桃林的岔路连我都数错过。', 'shenhuaizhou');
+      showChoices([
+        {
+          text: '「对不起，我迷路了……给你添麻烦了。」',
+          result: '他愣了一下。你道歉是因为你真的觉得给人添了麻烦，语气很自然，没有半分讨好。外门弟子见了内门师兄哪个不是竭力攀附，可你只是把他当成一个被你打扰了的人。',
+          effect: () => changeAffection('shenhuaizhou', 12),
+          next: scene_c1_bridge
+        },
+        {
+          text: '「你是大师兄？那以后请多指教！」',
+          result: '他笑了笑，桃花眼弯弯的。但笑里有一丝很快散去的疏离——你用的是「大师兄」这个身份，而非他这个人。',
+          effect: () => changeAffection('shenhuaizhou', 8),
+          next: scene_c1_bridge
+        },
+        {
+          text: '「我自己能找到路，不用麻烦你。」',
+          result: '他收起伞，看了你很久。你语气硬，却没有恶意。他没说话，只是把伞往你这边倾了倾。',
+          effect: () => changeAffection('shenhuaizhou', 5),
+          next: scene_c1_bridge
+        }
+      ]);
+    }, 1500);
+  } else {
+    // ===== 杂灵凡资：杂役弟子，领扫帚上东峰 =====
+    addNarration('测灵堂里安静了一瞬，接着是压得很低的嗤笑。');
+    addNarration('没有峰主起身，没有名册争抢。执笔执事翻了翻竹简，头也没抬——');
+    addNarration('「杂灵根。杂役弟子。领衣服去吧。」');
+    addNarration('你领到一身洗得发白的灰布短打，一把扫帚，一块刻着「杂役」的木牌。');
+    addNarration('分派住处时，各峰都推说不缺人手。最后有人指了指最远那座山：');
+    addNarration('「东峰。冷清，破，杂活多。就那儿吧。」');
+    addNarration('你扛着扫帚上山，包袱里只有两个冷馒头。东峰桃树成林，荒径难辨，你走着走着，迷了路。');
+    setTimeout(() => {
+      addNarration('');
+      addNarration('桃花深处，一把月白色的伞，撑开了。');
+      addNarration('伞下的人看见你肩上的扫帚，又看见你手里的杂役木牌，脚步顿了一下。');
+      addDialogue('???', '……新来的杂役？怎么一个人扛到这儿来了。', 'shenhuaizhou');
+      addNarration('你抬头，看到一个穿着月白道袍的年轻男子。他没有笑你手里的扫帚，眉眼温和得像三月春风。');
+      addDialogue('沈怀舟', '我是沈怀舟，东峰大弟子。扫帚给我，路滑。', 'shenhuaizhou');
+      showChoices([
+        {
+          text: '「不、不用！我自己能扛……谢谢你。」',
+          result: '他没接扫帚，只是伸手扶了一把差点滑倒的你。你道谢的语气很认真，认真到他怔住——东峰的杂役换了一拨又一拨，从没人对他说过「谢谢」，都只当他是支使杂活的大师兄。',
+          effect: () => changeAffection('shenhuaizhou', 12),
+          next: scene_c1_bridge
+        },
+        {
+          text: '「大师兄好！以后东峰的杂活都包在我身上！」',
+          result: '他笑了，桃花眼弯弯的，却把你肩上的扫帚抽走一半扛在自己肩上：「东峰的杂活不归你一个人。」他笑里有丝心疼，你倒没听出来。',
+          effect: () => changeAffection('shenhuaizhou', 8),
+          next: scene_c1_bridge
+        },
+        {
+          text: '「……杂役是不是，不能在东峰学剑？」',
+          result: '他沉默了片刻，把伞递给你：「规矩是别人定的。」他扛起你的扫帚走在前面，声音很轻，「桃林的路，我先教你认。」',
+          effect: () => changeAffection('shenhuaizhou', 10),
+          next: scene_c1_bridge
+        }
+      ]);
+    }, 1500);
+  }
 }
 
 function scene_c1_bridge() {
+  const tier = getTalentTier();
   addNarration('');
-  addNarration('他没有再多说什么，只是蹲下身，背对着你。');
-  addDialogue('沈怀舟', '上来吧。东峰的路不好走，天黑之前到不了。', 'shenhuaizhou');
-  addNarration('你趴在他背上。他的背很暖，走得很慢。');
-  addNarration('你困了。迷迷糊糊之间，你感觉他绕了很远的路。');
-  addNarration('');
-  addNarration('到了住处，他把你放下，替你盖好被子。');
-  addDialogue('沈怀舟', '明天带你去见师尊。早点睡。', 'shenhuaizhou');
-  addNarration('他转身离开。走到门口，又停下。');
-  addDialogue('沈怀舟', '……你叫什么名字？', 'shenhuaizhou');
-  addNarration(`你报了名字。他点了点头，推门走了。`);
-  addNarration('');
-  addNarration('你不知道的是——他走到拐角处，靠着墙站了很久。');
-  addNarration('他摸着自己的耳朵。是烫的。');
-  
+
+  if (tier === 'peerless') {
+    addNarration('他替你拎着包袱，撑伞走在前头，一路没有半分逾矩。');
+    addNarration('东峰的客舍很久没住过人，他却像早有准备——被褥晒过，炉上温着茶。');
+    addDialogue('沈怀舟', '今夜先歇着。明日辰时，我带你上主峰见师尊。', 'shenhuaizhou');
+    addNarration('他走到门口，又停下。');
+    addDialogue('沈怀舟', '……四峰许你的前程，比东峰好百倍。现在反悔，还来得及。');
+    addNarration(`你报了名字，说：「我不反悔。」他念了一遍你的名字，推门走了。`);
+    addNarration('');
+    addNarration('你不知道的是——他走到拐角处，靠着墙站了很久。');
+    addNarration('他摸着自己的耳朵。是烫的。');
+  } else if (tier === 'medium') {
+    addNarration('他没有再多说什么，只是蹲下身，背对着你。');
+    addDialogue('沈怀舟', '上来吧。东峰的路不好走，天黑之前到不了。', 'shenhuaizhou');
+    addNarration('你趴在他背上。他的背很暖，走得很慢。');
+    addNarration('你困了。迷迷糊糊之间，你感觉他绕了很远的路。');
+    addNarration('');
+    addNarration('到了外门弟子在东峰的借住厢房，他把你放下，替你盖好被子。');
+    addDialogue('沈怀舟', '明天我带你去求见师尊。能不能留下……看缘分。早点睡。', 'shenhuaizhou');
+    addNarration('他转身离开。走到门口，又停下。');
+    addDialogue('沈怀舟', '……你叫什么名字？', 'shenhuaizhou');
+    addNarration(`你报了名字。他点了点头，推门走了。`);
+    addNarration('');
+    addNarration('你不知道的是——他走到拐角处，靠着墙站了很久。');
+    addNarration('他摸着自己的耳朵。是烫的。');
+  } else {
+    addNarration('他从你肩上抽走扫帚，又拎过你那个轻得可怜的包袱。');
+    addDialogue('沈怀舟', '杂役房在山后。路黑，跟着我。', 'shenhuaizhou');
+    addNarration('杂役房漏风，他却熟门熟路——翻出炭火点上，把自己的一床厚褥子铺在你木板床上，又塞给你两个还热着的馒头。');
+    addNarration('你捧着馒头，不知道该说什么。');
+    addDialogue('沈怀舟', '明天我替你去求师尊。可你要记住，他若不收……', 'shenhuaizhou');
+    addNarration('他没把话说完，只摸了摸你的头。');
+    addDialogue('沈怀舟', '……你叫什么名字？', 'shenhuaizhou');
+    addNarration(`你报了名字。他在掌心写了一遍，像是怕忘。`);
+    addNarration('');
+    addNarration('你不知道的是——他走到拐角处，靠着墙站了很久。');
+    addNarration('他摸着自己的耳朵。是烫的。');
+  }
+
   setTimeout(() => {
     addNarration('');
     addNarration('第二天清晨，沈怀舟来找你。');
-    addDialogue('沈怀舟', '今天带你去见师尊。路上……我教你几个基本的吐纳法门。', 'shenhuaizhou');
+    if (tier === 'peerless') {
+      addDialogue('沈怀舟', '走吧。路上……我教你几句师尊的规矩。他不喜人多话。', 'shenhuaizhou');
+    } else if (tier === 'medium') {
+      addDialogue('沈怀舟', '今天去求见师尊。路上……我教你几个基本的吐纳法门，万一师尊考你。', 'shenhuaizhou');
+    } else {
+      addNarration('天还没亮。他隔着杂役房的窗子压低声音——');
+      addDialogue('沈怀舟', '把扫帚放下。趁守山弟子没醒，路上我教你一口吐纳……杂役也能学，别让人看见。', 'shenhuaizhou');
+    }
     addNarration('他站在桃树下，朝你伸出手。');
     showChoices([
       {
@@ -2187,95 +2357,231 @@ function scene_c1_bridge() {
 
 function scene_c1_rongzhao() {
   clearText();
+  const tier = getTalentTier();
   addNarration('你跟着沈怀舟上了东峰之巅。');
   addNarration('一座清冷的殿宇立在峰顶，殿门半掩，里面传来翻书的声音。');
-  addNarration('你推门进去。');
-  addNarration('');
   addNarration('殿内，一个白色长发的男人坐在案前。他的眼睛是冰蓝色的，像结了冰的湖。');
-  addNarration('他没有抬头。');
-  addDialogue('沈怀舟', '师尊，这是新入门的师妹。', 'shenhuaizhou');
-  addNarration('他翻了一页书。');
-  addDialogue('容昭', '嗯。', 'rongzhao');
-  addNarration('沈怀舟退下了。殿内只剩你和他。');
-  addNarration('他终于抬头，看了你一眼。');
-  addDialogue('容昭', '伸出手。', 'rongzhao');
-  addNarration('你伸出测灵石。他指尖点在测灵石上，灵力探入。');
-  addNarration('片刻，他收回手。');
-  addDialogue('容昭', `${state.linggen}。……能修。`, 'rongzhao');
-  addNarration('声音很轻，像在说给自己听。');
-  addNarration('');
-  addNarration('然后他又低下头看书，像是你从未来过。');
-  addNarration('你站在殿中，不知道该走还是该留。');
-  addNarration('你鼓起勇气，问了一句——');
 
-  showChoices([
-    {
-      text: '「师尊，我……还能留在东峰吗？」',
-      result: `他翻书的手停了一瞬。测灵根后你没有追问「为什么我是${state.linggen}」，也没有露出失望的表情。你只是点了点头，说了声「哦」。他觉得你安静——安静到他愿意让你留下。`,
-      effect: () => changeAffection('rongzhao', 18),
-      next: scene_c1_rongzhao_deeper
-    },
-    {
-      text: '「师尊，我会努力的，不会给您丢脸。」',
-      result: '他没有抬头，只是翻了一页书。你这句话和其他弟子说的一样。但你注意到，他翻的那一页，和上一页是同一页——他没在听，但也没让你走。',
-      effect: () => changeAffection('rongzhao', 13),
-      next: scene_c1_rongzhao_deeper
-    },
-    {
-      text: '（默默退出去，不打扰他）',
-      result: '你走到门口时，身后传来他的声音：「明天来我书房。」他收徒从不解释，但这个「明天」是留你的意思。',
-      effect: () => changeAffection('rongzhao', 15),
-      next: scene_c1_rongzhao_deeper
-    }
-  ]);
+  if (tier === 'peerless') {
+    // ===== 绝世：破例收亲传 =====
+    addNarration('你推门进去时，沈怀舟难得地敛了笑，躬身行礼。');
+    addDialogue('沈怀舟', '师尊，人……我带来了。', 'shenhuaizhou');
+    addNarration('他终于抬头。冰蓝色的眼睛落在你脸上，没有温度，却看得极深。');
+    addDialogue('容昭', '伸出手。', 'rongzhao');
+    addNarration('他指尖点在你掌心的测灵石上，灵力探入。片刻后，殿中灵气无端一荡——案上的书页自己翻动起来。');
+    addNarration('他收回手，声音很轻：');
+    addDialogue('容昭', `${state.linggen}。四峰都要你。来东峰，做什么。`, 'rongzhao');
+    addNarration('沈怀舟站在一旁，呼吸都放轻了。满殿只等你一句话。你听见自己说——');
+    showChoices([
+      {
+        text: '「弟子想修最真的剑。东峰的剑，是真的。」',
+        result: '他注视你很久，久到沈怀舟的指尖都绷紧了。然后他起身，从架上取下一柄素色木剑，横放在你面前。「本尊三百年没收徒。今日起——你是本尊座下，亲传弟子。」',
+        effect: () => { changeAffection('rongzhao', 22); setDiscipleType('personal'); },
+        next: scene_c1_rongzhao_deeper
+      },
+      {
+        text: '「弟子不想被当成宝贝抢来抢去。想在东峰，安静修行。」',
+        result: '他冰蓝的眼里掠过一丝极淡的波澜。「安静？」他重复了一遍，忽然把一卷竹简推到案沿，「那就别后悔。东峰的清苦，四峰没有一峰让你受。」他顿了顿，「……行礼吧。亲传。」',
+        effect: () => { changeAffection('rongzhao', 18); setDiscipleType('personal'); },
+        next: scene_c1_rongzhao_deeper
+      },
+      {
+        text: '「……是我自己要跟大师兄走的。请师尊成全。」',
+        result: '他的目光移向沈怀舟，又移回你身上。沈怀舟垂着头，耳根却是红的。容昭沉默良久，终是淡淡开口：「起来吧。既选了东峰，从此四峰的厚遇，与你无关。——你是本尊的亲传弟子了。」',
+        effect: () => { changeAffection('rongzhao', 15); changeAffection('shenhuaizhou', 6); setDiscipleType('personal'); },
+        next: scene_c1_rongzhao_deeper
+      }
+    ]);
+  } else if (tier === 'medium') {
+    // ===== 中庸：记名弟子 =====
+    addNarration('沈怀舟带你进去，躬身行礼。');
+    addDialogue('沈怀舟', '师尊，这位外门师妹根器端正，想在东峰听讲修行。', 'shenhuaizhou');
+    addNarration('他翻了一页书，终于抬头，指尖点在你递出的测灵石上。');
+    addDialogue('容昭', `${state.linggen}。……能修。`, 'rongzhao');
+    addNarration('他把测灵石推回给你，语气听不出喜怒。');
+    addDialogue('容昭', '东峰不养闲人，也不收俗客。', 'rongzhao');
+    addNarration('沈怀舟还要再求，他抬了抬手。');
+    addDialogue('容昭', '记名。讲经时愿来便来，听不懂，是你自己的事。', 'rongzhao');
+    addNarration('没有拜师茶，没有名分文书。但沈怀舟偷偷朝你笑了一下——这是他能求来的最好结果。你鼓起勇气——');
+    showChoices([
+      {
+        text: '「谢师尊！弟子一定好好听，不给东峰丢脸。」',
+        result: '他没应声，只翻了一页书。你注意到，他翻的那一页和上一页是同一页——他没在看书。',
+        effect: () => { changeAffection('rongzhao', 14); setDiscipleType('registered'); },
+        next: scene_c1_rongzhao_deeper
+      },
+      {
+        text: '「师尊……记名弟子，将来能成为亲传吗？」',
+        result: '他终于正眼看你，冰蓝眼睛里没什么情绪：「剑练到了，名分自然到。」沈怀舟在一旁轻轻吐了口气——师尊肯解释，已是破例。',
+        effect: () => { changeAffection('rongzhao', 16); setDiscipleType('registered'); },
+        next: scene_c1_rongzhao_deeper
+      },
+      {
+        text: '（郑重磕了三个头，没有多话）',
+        result: '你退到门口时，身后传来他的声音：「明日讲经，坐前排。」记名弟子从没有坐前排的——沈怀舟替你高兴，眼睛弯成了桃花。',
+        effect: () => { changeAffection('rongzhao', 15); setDiscipleType('registered'); },
+        next: scene_c1_rongzhao_deeper
+      }
+    ]);
+  } else {
+    // ===== 杂灵：容昭拒收，殿门合拢 =====
+    addNarration('沈怀舟让你在殿外候着，自己先进去。你攥着杂役木牌，站得笔直。');
+    addNarration('殿门没关严，里面的话，一字一句传出来——');
+    addDialogue('沈怀舟', '师尊，这位师妹虽只是杂役，可她心性……', 'shenhuaizhou');
+    addDialogue('容昭', `${state.linggen}也往本尊殿里领。怀舟，你逾矩了。`, 'rongzhao');
+    addDialogue('沈怀舟', '师尊！三百年了，东峰就不能再多一个人吗——', 'shenhuaizhou');
+    addNarration('“啪”的一声，是竹简落在案上的声音。');
+    addDialogue('容昭', '东峰的门，不是谁都能进。让她走。', 'rongzhao');
+    addNarration('殿门从里面合上了。你甚至没能看清那位师尊的脸，只看见门阖上前一瞬，一抹冰蓝色的光——冷得像山巅终年不化的雪。');
+    addNarration('沈怀舟出来时，眼眶微红。他张了张嘴，什么都说不出。你听见自己开口——');
+    showChoices([
+      {
+        text: '「没关系的，大师兄。杂役也能修炼，对不对？」',
+        result: '他蹲下来，与你平视，第一次没有笑：「对。我教你。」他替你把杂役木牌翻了个面——像是把那两个字盖住。殿内，翻书的声音停了很久。',
+        effect: () => { changeAffection('shenhuaizhou', 16); changeAffection('rongzhao', 2); setDiscipleType('servant'); state.flags.refusedByRongzhao = true; },
+        next: scene_c1_rongzhao_deeper
+      },
+      {
+        text: '「……我会让他改口的。总有一天。」',
+        result: '沈怀舟怔住，随后用力点头：「好。我陪你等。」殿门之后，那一页书，始终没有翻过去。',
+        effect: () => { changeAffection('shenhuaizhou', 12); changeAffection('rongzhao', 4); setDiscipleType('servant'); state.flags.refusedByRongzhao = true; },
+        next: scene_c1_rongzhao_deeper
+      },
+      {
+        text: '（对着紧闭的殿门，端端正正磕了一个头）',
+        result: '你没拜成师，却行了拜师大礼。沈怀舟别过脸去。殿内传来一声几不可闻的叹息，轻得像雪落在书页上——你不确定自己是不是听错了。',
+        effect: () => { changeAffection('shenhuaizhou', 10); changeAffection('rongzhao', 6); setDiscipleType('servant'); state.flags.refusedByRongzhao = true; },
+        next: scene_c1_rongzhao_deeper
+      }
+    ]);
+  }
 }
 
 function scene_c1_rongzhao_deeper() {
+  const tier = getTalentTier();
   addNarration('');
-  addNarration('你正要离开，他忽然又开口了。');
-  addDialogue('容昭', '……你叫什么名字。', 'rongzhao');
-  addNarration('你报了名字。他重复了一遍，声音很低。');
-  addDialogue('容昭', '东峰人少。有什么不懂的，来问我。', 'rongzhao');
-  addNarration('这是他说过最长的一句话。');
-  
-  setTimeout(() => {
-    addNarration('');
-    addNarration('第二天清晨，你发现窗台上多了一本手抄剑谱。字迹是新的，墨还没干透。');
-    addNarration('你翻开第一页，上面写着——');
-    addNarration('「基础剑法·东峰入门。练熟之后再练第二页。」');
-    addNarration('字迹清隽，和藏经阁残页上的一模一样。');
-    
-    showChoices([
-      {
-        text: '去书房找师尊道谢。',
-        result: '你敲门进去，他正在看书。你说谢谢，他头也没抬，只说了句「放桌上」。你放了茶，走了。过了很久，他才拿起那杯茶——他记得你泡茶时水温偏高，是怕他嫌凉。',
-        effect: () => changeAffection('rongzhao', 11),
-        next: scene_c1_end
-      },
-      {
-        text: '先练熟再说。',
-        result: '你练了一整天。傍晚时，你发现窗台上又多了一瓶伤药。没有署名，但瓶底刻着一个「容」字。他写剑谱写到半夜，墨迹未干就放在你窗台——伤药也是，药味还是新的。',
-        effect: () => { changeAffection('rongzhao', 9); addSwordArt(5); addLingli(10); },
-        next: scene_c1_end
-      },
-      {
-        text: '去问大师兄，这是不是师尊给的。',
-        result: '沈怀舟看了一眼剑谱，沉默了一会儿，笑了。「是师尊的字。他很多年没写过剑谱了。」他顿了顿，「他以前写过——给另一个人。」',
-        effect: () => { changeAffection('shenhuaizhou', 8); changeAffection('rongzhao', 5); },
-        next: scene_c1_end
-      }
-    ]);
-  }, 2000);
+
+  if (tier === 'peerless') {
+    addNarration('你正要退出殿外，他忽然又开口了。');
+    addDialogue('容昭', '……你叫什么名字。', 'rongzhao');
+    addNarration('你报了名字。他重复了一遍，声音很低，像把两个字收进了某个旁人看不见的地方。');
+    addDialogue('容昭', '东峰人少。既入本尊门下，有什么不懂的，来问我。', 'rongzhao');
+    addNarration('沈怀舟在殿外听得怔住——这是师尊三百年来，说过最长的一句话。');
+    setTimeout(() => {
+      addNarration('');
+      addNarration('第二天清晨，你发现窗台上多了一本手抄剑谱。字迹是新的，墨还没干透。');
+      addNarration('你翻开第一页，上面写着——');
+      addNarration('「基础剑法·东峰入门。练熟之后再练第二页。」');
+      addNarration('字迹清隽，和藏经阁残页上的一模一样。');
+      showChoices([
+        {
+          text: '去书房找师尊道谢。',
+          result: '你敲门进去，他正在看书。你说谢谢，他头也没抬，只说了句「放桌上」。你放了茶，走了。过了很久，他才拿起那杯茶——他记得你泡茶时水温偏高，是怕他嫌凉。',
+          effect: () => changeAffection('rongzhao', 11),
+          next: scene_c1_end
+        },
+        {
+          text: '先练熟再说。',
+          result: '你练了一整天。傍晚时，你发现窗台上又多了一瓶伤药。没有署名，但瓶底刻着一个「容」字。他写剑谱写到半夜，墨迹未干就放在你窗台——伤药也是，药味还是新的。',
+          effect: () => { changeAffection('rongzhao', 9); addSwordArt(5); addLingli(10); },
+          next: scene_c1_end
+        },
+        {
+          text: '去问大师兄，这是不是师尊给的。',
+          result: '沈怀舟看了一眼剑谱，沉默了一会儿，笑了。「是师尊的字。他很多年没写过剑谱了。」他顿了顿，「他以前写过——给另一个人。」',
+          effect: () => { changeAffection('shenhuaizhou', 8); changeAffection('rongzhao', 5); },
+          next: scene_c1_end
+        }
+      ]);
+    }, 2000);
+  } else if (tier === 'medium') {
+    addNarration('出殿时，沈怀舟一路送你到讲经堂。');
+    addNarration('他指着最前排一个空位，眼睛弯弯的：「那个位置，以后是你的。师尊没明说，可他让人把灰擦了。」');
+    addNarration('记名弟子没有名册，没有拜师礼。可那个被擦干净的座位，比什么文书都重。');
+    setTimeout(() => {
+      addNarration('');
+      addNarration('第二天清晨，你在窗台上发现一册卷了边的剑诀旧本。');
+      addNarration('旁边压着张字条，是沈怀舟的字：「师尊讲经的底本，我求了半宿。他没说给——也没说不给。」');
+      addNarration('你翻开，书页空白处布满两种字迹：清隽的是批注，圆润的是沈怀舟抄录的白话注解。');
+      showChoices([
+        {
+          text: '去书房外，替师尊添一壶新茶。',
+          result: '你不敢敲门，只把热茶放在书房门口，轻手轻脚走了。许久，门开了一条缝，那壶茶被提了进去。第二日，原处多了只洗净的茶壶，壶底压着一片新抄的剑式。',
+          effect: () => changeAffection('rongzhao', 10),
+          next: scene_c1_end
+        },
+        {
+          text: '先把旧本练熟，不辜负大师兄的求情。',
+          result: '你照着两种字迹练了一整天。入夜，沈怀舟来送伤药，发现你每一式都练了，连他随手写的注解也看了。他在月下站了很久，最后只说：「……值得。」',
+          effect: () => { changeAffection('shenhuaizhou', 10); addSwordArt(4); addLingli(8); },
+          next: scene_c1_end
+        },
+        {
+          text: '问沈怀舟：「师尊是不是，其实没那么讨厌我？」',
+          result: '他笑了，把你手里的旧本翻到最后一页——那里有一行与批注同色的清隽字迹，墨色很新：「此子可教。」你愣住。沈怀舟轻声说：「他嘴硬三百年了。」',
+          effect: () => { changeAffection('shenhuaizhou', 7); changeAffection('rongzhao', 8); },
+          next: scene_c1_end
+        }
+      ]);
+    }, 2000);
+  } else {
+    addNarration('入夜，你回到漏风的杂役房。');
+    addNarration('门被推开一条缝。沈怀舟侧身进来，怀里抱着东西——');
+    addNarration('一册翻得起了毛边的入门剑诀，两个还冒热气的肉包，还有一小瓶治手裂的药膏。');
+    addDialogue('沈怀舟', '师尊不收徒弟。可这天下的剑，没规定只许谁练。', 'shenhuaizhou');
+    addNarration('他把剑诀摊在你木板床上，就着炭火，一页一页翻给你看。');
+    addDialogue('沈怀舟', '白天你扫地，夜里我教你。剑谱先放你这儿——别让人看见。', 'shenhuaizhou');
+    setTimeout(() => {
+      addNarration('');
+      addNarration('那本剑诀里夹着几张新纸，是沈怀舟自己的笔迹，把每一个起手式都画成了图。');
+      addNarration('纸角还有一滴干掉的血——他大概是白天做完杂务，熬夜替你抄的。');
+      showChoices([
+        {
+          text: '「大师兄……我给你磕个头吧。」',
+          result: '他连忙把你拽起来，耳根通红：「别别别，东峰不兴这个。」你坚持鞠了一躬。他受了一半就侧身避开，声音发紧：「你好好练，就是谢我了。」',
+          effect: () => changeAffection('shenhuaizhou', 14),
+          next: scene_c1_end
+        },
+        {
+          text: '当夜就着炭火，照着图谱练到天亮。',
+          result: '你练了一夜。天亮时手腕酸得抬不起来，图谱上却多了一行新字，是沈怀舟不知何时来又走时留的：「手腕再低三寸。包子在锅里，记得吃。」',
+          effect: () => { changeAffection('shenhuaizhou', 9); addSwordArt(4); addLingli(6); },
+          next: scene_c1_end
+        },
+        {
+          text: '「你为什么……对一个杂役这么好？」',
+          result: '他拨着炭火，火光映在他桃花眼里：「三百年前，也有人不在意我是什么身份，蹲下来教我握剑。」他看着你，「现在轮到我了。」',
+          effect: () => { changeAffection('shenhuaizhou', 11); changeAffection('lihanyuan', 4); },
+          next: scene_c1_end
+        }
+      ]);
+    }, 2000);
+  }
 }
 
 function scene_c1_end() {
+  const tier = getTalentTier();
   addNarration('');
-  addNarration('就这样，你成了东峰的第四名弟子。');
-  addNarration('东峰只有四个人——你、大师兄沈怀舟、师尊容昭，还有一个常年在魔渊洞闭关的「二师姐」。');
+  if (tier === 'peerless') {
+    addNarration('就这样，你成了容昭座下亲传弟子——东峰三百年来第一个。');
+    addNarration('四峰峰主扼腕叹息了整整三日。从此你行走宗门，人人见了都要称一声「东峰小师叔」。');
+    addNarration('东峰名义上有四人——你、大师兄沈怀舟、师尊容昭，还有一个常年在魔渊洞闭关的「二师姐」。');
+  } else if (tier === 'medium') {
+    addNarration('就这样，你成了东峰的记名弟子。');
+    addNarration('名册上查不到你的名字，讲经堂却有你的座位。东峰的人渐渐习惯了这个每天最早来扫经堂、最晚离开的外门师妹。');
+    addNarration('你、大师兄沈怀舟，还有那位常年闭关的「二师姐」——加上不怎么搭理人的师尊容昭，凑成了冷冷清清的东峰。');
+  } else {
+    addNarration('就这样，你在东峰的杂役房住了下来。');
+    addNarration('名册上你是杂役，月例最少，活计最重。东峰没有一个人承认你是弟子——');
+    addNarration('除了沈怀舟。');
+    addNarration('那天夜里，他站在杂役房外，远远望着东峰之巅那点不灭的灯火，轻声说——');
+    addDialogue('沈怀舟', '总有一天，我会让师尊改口。在那之前……你还有我。', 'shenhuaizhou');
+    addNarration('你握紧了怀里那册起毛的剑诀。风很冷，胸口却是烫的。');
+  }
   addNarration('');
   addNarration('——此幕暂歇·东峰夜行——');
-  state.flags.metRongzhao = true;  // 解锁书房地点
-  
+  state.flags.metRongzhao = true;  // 解锁书房地点（杂役线以送茶/洒扫身份接近）
+
   setTimeout(() => {
     state.chapter = 2;
     grantActionPoints(2);
@@ -2287,9 +2593,20 @@ function scene_c1_end() {
 function scene_chapter2_start() {
   clearText();
   setChapterBg(2);
-  addNarration('日子一天天过去。你资质虽差，却比谁都努力。');
-  addNarration('每天天不亮就起来练剑，夜深了还在后山挥剑。');
-  addNarration('你练的是东峰最基础的入门剑法。因为你只会这个。');
+  const tier = getTalentTier();
+  if (tier === 'peerless') {
+    addNarration('日子一天天过去。你是四峰盯着的亲传天才，进境一日千里。');
+    addNarration('可你偏不爱讲经堂里那些打量的目光，每天天不亮就往后山最荒的废剑台跑。');
+    addNarration('越天才，你越把最基础的起手式往死里练——根不扎稳，楼越高塌得越快。');
+  } else if (tier === 'medium') {
+    addNarration('日子一天天过去。你资质平平，胜在勤勉。');
+    addNarration('外门功课一日不敢落下，夜深了还独自摸到后山加练。');
+    addNarration('你练的是东峰最基础的入门剑法。因为你只会这个。');
+  } else {
+    addNarration('日子一天天过去。你是东峰的杂役，天不亮就要挑水、洒扫、劈柴。');
+    addNarration('只有深夜的废剑台属于你。等所有人睡下，你才敢摸出大师兄偷塞给你的剑诀。');
+    addNarration('没有师父，没有月例，连点一盏灯都要自己省灯油。你练的，是最基础的入门剑法——因为你只会这个。');
+  }
   addNarration('');
   addNarration('有一天，你在练剑时，听到两个仙道峰的弟子在议论——');
   addNarration('');
@@ -2381,13 +2698,21 @@ function scene_c2_ask_yunzhou() {
 }
 
 function scene_c2_ask_rongzhao() {
+  const tier = getTalentTier();
   addNarration('');
-  addNarration('你站在书房里，等着他的回答。');
+  if (tier === 'low') {
+    addNarration('你借着给书房送新茶的由头，站在廊下——杂役只能到这里。你捧着茶盘，隔着门，把那个问题问出了口。');
+    addNarration('门内翻书声停了一瞬。你以为自己要被赶走了，他却没有叫你离开。');
+  } else {
+    addNarration('你站在书房里，等着他的回答。');
+  }
   addNarration('他翻完了一页书，又翻了一页。很久，他才开口。');
   addDialogue('容昭', '他是我师弟。', 'rongzhao');
-  addNarration('声音很平，但你看到他的指尖微微发白。');
+  addNarration('声音很平，但门内书页被指节压出了轻微的褶皱声。');
   addDialogue('容昭', '三百年前的事，与你无关。你练你的剑。', 'rongzhao');
-  addNarration('他低下头，不再看你。但你注意到，那本书，他翻到的那一页，始终没有翻过去。');
+  addNarration(tier === 'low'
+    ? '门内重新安静下来。可你站在廊下没走——你听见那本书，一页，始终没有翻过去。'
+    : '他低下头，不再看你。但你注意到，那本书，他翻到的那一页，始终没有翻过去。');
   
   showChoices([
     {
@@ -2413,38 +2738,84 @@ function scene_c2_ask_rongzhao() {
 
 function scene_c2_practice() {
   clearText();
-  addNarration('你开始每天在后山练剑。东峰后山有一处废弃的练剑台，据说三百年前有人在那里练过剑。');
-  addNarration('你资质差，只能用最基础的剑法，一遍遍地挥。');
-  addNarration('第一天，剑掉了。第二天，摔了。第三天，手腕肿了。');
-  addNarration('但你继续练。');
+  const tier = getTalentTier();
+  const mc = state.mainCult;
+  const meleeCults = ['剑修', '枪修', '刀修', '体修'];
+
+  addNarration('你开始每天往后山跑。后山有一处废弃的练剑台，石板裂着一道暗色的旧痕，据说三百年前有人在那里练过剑。');
+  if (tier === 'peerless') {
+    addNarration('以你的资质，什么绝学都有人上赶着教。可你偏把最简单的起手式在这废台上一遍遍磨。');
+    addNarration('第一天，动作太满。第二天，气息太浮。第三天，沈怀舟送来的新剑穗都被你握湿了。');
+    addNarration('但你继续练。天才肯下笨功夫，旁人都当你疯了。');
+  } else if (tier === 'medium') {
+    addNarration('你资质平平，只能用最基础的法门，一遍遍地练。');
+    addNarration('第一天，手生了。第二天，摔了。第三天，手腕肿了。');
+    addNarration('但你继续练。');
+  } else {
+    addNarration('白天做完杂役，夜里才能摸到这里。你只能用大师兄教的最基础法门，一遍遍地练。');
+    addNarration('第一天，器械差点脱手。第二天，摔了。第三天，磨破的手又裂开，血把剑柄都浸湿了。');
+    addNarration('但你第二天照常来。杂役房没有灯，你就借月光。');
+  }
   addNarration('');
-  addNarration('第十天，你练到深夜。月光照在练剑台上，你忽然感觉脚下的石板微微发烫。');
-  addNarration('一道暗色的纹路从石板中浮现，像是一道残留的痕迹。');
-  addNarration('你伸手碰了一下那道纹路。');
+  addNarration('第十天深夜。月光照在练剑台上，脚下的石板忽然微微发烫。');
+  addNarration('一道暗色的纹路从石板中浮现——像是被什么力量惊醒的旧伤疤。');
+
+  // 主修不同，惊醒残痕的方式也不同
+  if (mc === '剑修') {
+    addNarration('你手中的剑不知何时自己嗡鸣起来。你一剑点下，正中纹路——');
+  } else if (meleeCults.includes(mc)) {
+    addNarration('你收势时掌风扫过台面，' + mc + '的拙劲正落在那道纹路上——');
+  } else {
+    addNarration('你盘膝吐纳，周身灵气循' + mc + '的法门缓缓流转，无意间汇向那道纹路——');
+  }
   addNarration('');
   addNarration('轰——');
   addNarration('');
+
+  // 魔气体质 / 魔门出身：残痕先认出魔气
+  if (hasDemonQi()) {
+    addNarration('一缕熟悉的冰凉气息先在你体内转了一圈，带着审视，像是在辨认什么。');
+    addDialogue('???', '……魔道的气息。昆仑竟也收带魔骨的人了？', 'lihanyuan');
+    addNarration('那声音冷笑了一声，却无杀意：');
+    addDialogue('???', '算你走运。我不杀你——也不许别人杀。', 'lihanyuan');
+    changeAffection('lihanyuan', 3);
+  }
+
   addNarration('一股冰凉的气息顺着你的指尖窜入体内。你听到一个声音——');
-  addDialogue('???', '剑尖再低三寸。手腕放松。你太紧了。', 'lihanyuan');
-  addNarration('你吓得剑都掉了。四处张望，空无一人。');
-  
+  if (tier === 'peerless') {
+    addDialogue('???', `${state.linggen}……跑到废剑台来练起手式？`, 'lihanyuan');
+    addNarration('那声音带着惯有的冷，顿了顿，又道：');
+    addDialogue('???', '剑是好剑，人太满。气都浮在指尖——再低三寸。', 'lihanyuan');
+  } else if (tier === 'medium') {
+    addDialogue('???', '手腕再低三寸。脚步放松。你太紧了。', 'lihanyuan');
+  } else {
+    addDialogue('???', '手腕再低三寸。……杂役服？', 'lihanyuan');
+    addNarration('那声音忽然沉了下去，像是透过三百年的尘土看见了什么。');
+    addDialogue('???', '练了三个月，起手式还是错的。可你这双手……比那些穿绫罗的，稳。', 'lihanyuan');
+  }
+  addNarration('你吓得手一抖，四处张望，空无一人。');
+
   showChoices([
     {
       text: '「你是谁？出来！」',
-      result: '那个声音没出来，只冷冷说了一句：「问那么多做什么。练你的剑。」语气是不耐烦的。你练了三个月连起手式都没对，他看得烦躁。',
+      result: tier === 'low'
+        ? '那个声音没出来，只冷冷哼了一句：「问那么多做什么。练你的剑。」可你听得出，那语气里没有对杂役的轻贱——倒像是怕多说一句，就会想起什么旧事。'
+        : '那个声音没出来，只冷冷说了一句：「问那么多做什么。练你的剑。」语气是不耐烦的。你这一式练了几十遍都没对，他看得烦躁。',
       effect: () => changeAffection('lihanyuan', 12),
       next: scene_c2_voice
     },
     {
-      text: '（捡起剑，继续练）',
-      result: '你捡起剑，按他说的调整了姿势。剑势顺畅了许多。那个声音没有再出现，但你能感觉到——有人在看着你。看得有些挑剔。',
+      text: '（稳住心神，按他说的继续练）',
+      result: '你调整了姿势。气息一沉，招式竟顺畅了许多。那个声音没有再出现，但你能感觉到——有人在看着你。' +
+        (tier === 'peerless' ? '他看了很久，忽然说了一句：「肯把天才当笨人练的，三百年你是头一个。」' : '看得有些挑剔，却始终没再出声打断。'),
       effect: () => changeAffection('lihanyuan', 10),
       next: scene_c2_voice
     },
     {
       text: '（转身就跑）',
-      result: '你跑了。但跑出练剑台的那一刻，身后传来一声嗤笑：「跑什么。」语气很轻蔑。',
-      effect: () => changeAffection('lihanyuan', 6),
+      result: '你跑了。但跑出练剑台的那一刻，身后传来一声嗤笑：「跑什么。」' +
+        (tier === 'low' ? '你跑出十几步，他又补了一句，声音低得几乎听不清：「……明天还来。杂役也是练剑的人。」' : '语气很轻蔑。'),
+      effect: () => changeAffection('lihanyuan', tier === 'low' ? 10 : 6),
       next: scene_c2_voice
     }
   ]);
@@ -2512,10 +2883,19 @@ function scene_c2_end() {
 function scene_chapter3_start() {
   clearText();
   setChapterBg(3);
+  const tier = getTalentTier();
   addNarration('三个月后，宗门安排弟子下山历练。');
-  addNarration('你被分到了人界集市的任务——采购药材，顺便见见世面。');
+  if (tier === 'peerless') {
+    addNarration('各峰都想看看东峰那位绝世亲传是何模样，特意给你派了体面的差事——巡访坊市，考察灵材行情。');
+    addNarration('说是历练，身后跟着好几道各峰打量的目光。');
+  } else if (tier === 'medium') {
+    addNarration('外门弟子轮值，你被分到了人界集市的任务——采购药材，顺便见见世面。');
+  } else {
+    addNarration('下山历练没有杂役的份。你的差事，是替东峰采买一年份的药材杂物。');
+    addNarration('背篓比你人还高，麻绳勒进肩膀。你天不亮就下了山。');
+  }
   addNarration('');
-  addNarration('人界集市很热闹。你办完事，在街上闲逛。');
+  addNarration('人界集市很热闹。办完事，你在街上闲逛。');
   addNarration('一个不起眼的小摊吸引了你的注意。');
   addNarration('摊上摆着各种稀奇古怪的东西——石头、木头、旧书。');
   addNarration('摊主靠在树上，银白长发，月白广袖，闭着眼，像是在打盹。');
@@ -2523,6 +2903,13 @@ function scene_chapter3_start() {
   addNarration('石头很圆，灰扑扑的，没有任何灵气波动。但你喜欢。');
   addDialogue('摊主', '那块是废石。', 'muchangli');
   addNarration('他没有睁眼，声音懒洋洋的。');
+  if (tier === 'peerless') {
+    addNarration('他鼻尖微动，忽然笑了：');
+    addDialogue('摊主', '一身上好的灵气养出来的衣裳，昆仑的亲传小师叔？被人捧着的宝贝，也蹲路边看石头？', 'muchangli');
+  } else if (tier === 'low') {
+    addNarration('他的目光从你压红的肩头扫到身后那只大背篓上，懒懒的声音里带了点别的东西：');
+    addDialogue('摊主', '昆仑的杂役？让小姑娘背比人还高的篓子，那帮牛鼻子真会使唤人。', 'muchangli');
+  }
   state.flags.metSu = true;  // 解锁集市地点
   
   showChoices([
@@ -2555,6 +2942,13 @@ function scene_c3_buy() {
   addNarration('然后他伸手，拿走了其中一枚。');
   addDialogue('慕长离', '够了。一枚就行。', 'muchangli');
   addNarration('他把石头递给你，指尖擦过你的掌心。他的手指很凉。');
+  if (hasFoxDemonBlood()) {
+    addNarration('指尖相触的一瞬，他忽然眯起眼，金紫异色瞳深处有什么动了一下。');
+    addDialogue('慕长离', '等等……你身上，有青丘的味道。', 'muchangli');
+    addNarration('他的声音压得很低，笑意里多了一丝认真：');
+    addDialogue('慕长离', '同族的小丫头。在这堆人里，你比我藏得还好。', 'muchangli');
+    changeAffection('muchangli', 5);
+  }
   addDialogue('慕长离', '我叫慕长离。做点小生意。', 'muchangli');
   addNarration('你报了名字。他重复了一遍，像是在品味什么。');
   addDialogue('慕长离', `……${state.playerName}。好名字。`, 'muchangli');
@@ -2751,9 +3145,20 @@ function scene_c4_talk() {
   addNarration('他已经在练剑台上等着了。');
   addNarration('他没有教你怎么出剑。他只是让你反复练一个最简单的动作——起手式。');
   addNarration('');
-  addDialogue('厉寒渊', '你练了三个月，连起手式都没练对。', 'lihanyuan');
-  addDialogue(state.playerName, '……我资质差。');
-  addDialogue('厉寒渊', '资质差才要练。资质好的人，懒得练这个。', 'lihanyuan');
+  const talkTier = getTalentTier();
+  if (talkTier === 'peerless') {
+    addDialogue('厉寒渊', `${state.linggen}的天才，起手式倒练了三个月。`, 'lihanyuan');
+    addDialogue(state.playerName, '……我怕根扎不稳。');
+    addDialogue('厉寒渊', '聪明人肯下笨功夫，比聪明人难得。', 'lihanyuan');
+  } else if (talkTier === 'medium') {
+    addDialogue('厉寒渊', '你资质平平，这套起手式倒是比谁都磨得久。', 'lihanyuan');
+    addDialogue(state.playerName, '……我笨鸟先飞。');
+    addDialogue('厉寒渊', '笨不怕。肯飞的，比赖在枝头的强。', 'lihanyuan');
+  } else {
+    addDialogue('厉寒渊', '你练了三个月，连起手式都没练对。', 'lihanyuan');
+    addDialogue(state.playerName, '……我资质差。');
+    addDialogue('厉寒渊', '资质差才要练。资质好的人，懒得练这个。', 'lihanyuan');
+  }
   addNarration('他的语气很冷淡，但纠正你手腕角度的时候，动作很轻。');
   addNarration('');
   addNarration('你注意到，他的右手手背上有一道很深的旧疤。');
@@ -2839,7 +3244,65 @@ function scene_c4_morning() {
 }
 
 function scene_c4_rongzhao() {
+  // 杂役线：秘境立功后的翻身时刻——容昭亲自登门改口
+  if (state.flags.refusedByRongzhao) {
+    addNarration('');
+    addNarration('他没有像往常一样停在正殿。这一次，容昭亲自走到了东峰最偏的杂役房。');
+    addNarration('他扫过你住了三年的逼仄小屋——墙角磨秃的扫帚、窗下练剑踩出的浅坑、枕边那卷起毛的剑诀。沉默了很久。');
+    addDialogue('容昭', '秘境里，你以杂役之身，护住了三个外门弟子。', 'rongzhao');
+    addNarration('他看着你，冰蓝眼睛深得看不出情绪。');
+    addDialogue('容昭', '三年前测灵台上，我说东峰不收杂灵根。', 'rongzhao');
+    addNarration('他闭了闭眼，像是把三百年前某个同样的决定，也一并咽了回去。');
+    addDialogue('容昭', '……是我看轻了人。', 'rongzhao');
+
+    showChoices([
+      {
+        text: '（跪下，端端正正磕了三个头）「师尊。」',
+        result: '他没有躲。你抬头时，看见他白色广袖里的手微微抬了一下，最终落在你发顶，极轻。「起来。从今日起，你是我容昭的亲传弟子。」东峰之巅的晨钟无风自响——那是宗门收录亲传才会撞的钟。',
+        effect: () => {
+          state.flags.refusedByRongzhao = false;
+          setDiscipleType('personal');
+          changeAffection('rongzhao', 20);
+        },
+        next: scene_c4_rongzhao_main
+      },
+      {
+        text: '「师尊现在……不嫌我灵根驳杂了？」',
+        result: '他静了一瞬，竟答得认真：「灵根是天生的，人是自己修的。这三年，你修得比任何天灵根都好。」他伸手将你扶起，「改口晚了三年。以后，东峰有你一席之地。」',
+        effect: () => {
+          state.flags.refusedByRongzhao = false;
+          setDiscipleType('personal');
+          changeAffection('rongzhao', 20);
+        },
+        next: scene_c4_rongzhao_main
+      },
+      {
+        text: '「我能等到这句话……值了。」',
+        result: '他看着你，冰封了三千年的眼底裂开一丝极浅的暖意。「嗯。」他只应了一个字，却亲手解下腰间东峰亲传的玉牌，放进你掌心，「从今往后，你不是杂役。是我的弟子。」',
+        effect: () => {
+          state.flags.refusedByRongzhao = false;
+          setDiscipleType('personal');
+          changeAffection('rongzhao', 20);
+        },
+        next: scene_c4_rongzhao_main
+      }
+    ]);
+    return;
+  }
+  scene_c4_rongzhao_main();
+}
+
+function scene_c4_rongzhao_main() {
   addNarration('');
+  // 记名线：秘境立功，擢为亲传
+  if (state.discipleType === 'registered') {
+    addDialogue('容昭', '名册上，今日添你的名字。', 'rongzhao');
+    addNarration('他看着你，声音依旧淡，却字字清楚：');
+    addDialogue('容昭', '记名三载，勤勉不辍。秘境一行，可见心性。擢你为亲传——以后，与怀舟同辈相称。', 'rongzhao');
+    setDiscipleType('personal');
+    changeAffection('rongzhao', 12);
+    addNarration('');
+  }
   addDialogue('容昭', '……回来就好。', 'rongzhao');
   addNarration('声音很轻，像怕惊碎什么。');
   addNarration('你从未见过他这样。三千年来，所有人都说他冷得像冰，可此刻你分明看到——冰下面，有什么在烧。');
@@ -3336,6 +3799,7 @@ function restartGame() {
     mainCult: '法修',
     subCult: '采药',
     origin: '凡人孤女',
+    discipleType: '',
     constitutions: [],
     weapon: '未得',
     killer: '未觉',
