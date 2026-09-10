@@ -679,6 +679,8 @@ body {
   <!-- 修仙面板（悬浮） -->
   <div id="cult-panel" style="display:none;">
     <div class="cult-row"><span class="cult-label">灵根</span><span class="cult-val" id="cult-linggen">伪灵根</span></div>
+    <div class="cult-row"><span class="cult-label">道向</span><span class="cult-val" id="cult-daopath">凡尘道</span></div>
+    <div class="cult-row"><span class="cult-label">主修</span><span class="cult-val" id="cult-maincult">法修</span></div>
     <div class="cult-row"><span class="cult-label">境界</span><span class="cult-val" id="cult-realm">练气一层</span></div>
     <div class="cult-row">
       <span class="cult-label">灵力</span>
@@ -707,9 +709,12 @@ let state = {
   flags: {},
   chapter: 1,
   playerName: '',
+  // 身份（开局选定）
+  linggen: '伪灵根',     // 灵根：天灵根/异灵根/双灵根/杂灵根/伪灵根
+  daoPath: '凡尘道',     // 修道方向：无情道/逍遥道/苍生道/多情道/杀戮道/凡尘道
+  mainCult: '法修',      // 主修方向：剑修/法修/丹修
   // 修仙属性
   cultivation: {
-    linggen: '伪灵根',
     realm: '练气一层',     // 境界
     realmLevel: 1,          // 境界等级（1-12，对应练气1-9+筑基+金丹+元婴）
     lingli: 0,              // 灵力值
@@ -720,6 +725,44 @@ let state = {
     freeActions: 1          // 剩余自由行动次数
   }
 };
+
+// ==================== 身份加成表 ====================
+// 灵根：灵力倍率 / 灵力上限倍率 / 初始剑法 / 起手灵力 / 文案备注
+const LINGGEN_BONUS = {
+  '天灵根': { lingliMul: 1.6, lingliMaxMul: 1.25, swordStart: 0, lingliStart: 30, note: '万中无一。吸纳天地灵气之速远胜常人，唯资质太显，易招祸端。' },
+  '异灵根': { lingliMul: 1.3, lingliMaxMul: 1.10, swordStart: 0, lingliStart: 10, note: '雷/冰/暗等变异之根。修速甚快，但灵气驳杂，与魔修易生共鸣。' },
+  '双灵根': { lingliMul: 1.1, lingliMaxMul: 1.05, swordStart: 0, lingliStart: 15, note: '两种灵根并存。中庸之姿，胜在平稳。' },
+  '杂灵根': { lingliMul: 0.85, lingliMaxMul: 0.95, swordStart: 0, lingliStart: 5, note: '五行皆有，无一精通。修速慢，但根基稳。' },
+  '伪灵根': { lingliMul: 0.65, lingliMaxMul: 0.90, swordStart: 5, lingliStart: 0, note: '仙道废材。修速极慢，然凡事认真者，或可另辟蹊径。' }
+};
+
+// 修道方向：起手好感加成 / 描述
+const DAOPATH_BONUS = {
+  '无情道':   { aff: { rongzhao: 6 }, note: '太上忘情，断情绝欲。容昭之冷，与你相契。' },
+  '逍遥道':   { aff: { muchangli: 6 }, note: '随心所欲，不羁于世。慕长离之姿，与你同路。' },
+  '苍生道':   { aff: { shenhuaizhou: 6 }, note: '心怀众生，温润如玉。沈怀舟之伪，与你同形。' },
+  '多情道':   { aff: { shenhuaizhou: 3, lihanyuan: 3, rongzhao: 3, muchangli: 3 }, note: '一念多情，难舍难断。你与四人皆有牵缠之缘。' },
+  '杀戮道':   { aff: { lihanyuan: 6 }, note: '以杀证道，剑出无悔。厉寒渊之血，与你同源。' },
+  '凡尘道':   { aff: {}, note: '不入大道，只问本心。无加成，亦无束缚。' }
+};
+
+// 主修方向：剑法倍率 / 灵力倍率 / 起手剑法 / 起手灵力 / 文案
+const MAINCULT_BONUS = {
+  '剑修': { swordMul: 1.6, lingliMul: 0.95, swordStart: 15, lingliStart: 0,  note: '以剑入道。剑法增益远胜他人，但灵力增长略缓。' },
+  '法修': { swordMul: 0.85, lingliMul: 1.35, swordStart: 0, lingliStart: 20, note: '以法为基。灵力深厚，剑法平平。' },
+  '丹修': { swordMul: 0.80, lingliMul: 1.10, swordStart: 0, lingliStart: 10, note: '以丹养道。灵力增长平稳，行有余力自调气血。' }
+};
+
+// 计算当前身份下的最终灵力倍率（灵根 × 主修）
+function getLingliMultiplier() {
+  const lg = LINGGEN_BONUS[state.linggen] || LINGGEN_BONUS['伪灵根'];
+  const mc = MAINCULT_BONUS[state.mainCult] || MAINCULT_BONUS['法修'];
+  return (lg.lingliMul || 1) * (mc.lingliMul || 1);
+}
+function getSwordMultiplier() {
+  const mc = MAINCULT_BONUS[state.mainCult] || MAINCULT_BONUS['法修'];
+  return (mc.swordMul || 1);
+}
 
 // 境界名称表
 const REALM_NAMES = [
@@ -751,26 +794,36 @@ function changeAffection(name, amount) {
 }
 
 // ==================== 修仙属性 ====================
+// 当前境界灵力上限（受灵根倍率影响）
+function curLingliMax() {
+  const base = REALM_LINGLI_MAX[state.cultivation.realmLevel - 1];
+  const lg = LINGGEN_BONUS[state.linggen] || LINGGEN_BONUS['伪灵根'];
+  return Math.round(base * (lg.lingliMaxMul || 1));
+}
+
 function addLingli(amount) {
   const c = state.cultivation;
+  // 应用灵根 × 主修倍率
+  const actual = Math.max(1, Math.round(amount * getLingliMultiplier()));
   const before = c.lingli;
-  c.lingli = Math.min(c.lingliMax, c.lingli + amount);
-  const actual = c.lingli - before;
-  if (actual > 0) showAffPopup('灵力 +' + actual);
+  c.lingli = Math.min(c.lingliMax, c.lingli + actual);
+  const gained = c.lingli - before;
+  if (gained > 0) showAffPopup('灵力 +' + gained);
   checkBreakthrough();
   updateCultPanel();
 }
 
 function addSwordArt(amount) {
   const c = state.cultivation;
-  c.swordArt += amount;
+  const actual = Math.max(1, Math.round(amount * getSwordMultiplier()));
+  c.swordArt += actual;
   // 剑法境界：每50熟练度提升一级
   const newLevel = Math.min(5, Math.floor(c.swordArt / 50));
   if (newLevel > SWORD_LEVELS.indexOf(c.swordArtLevel)) {
     c.swordArtLevel = SWORD_LEVELS[newLevel];
     showAffPopup('剑法突破：' + c.swordArtLevel);
   }
-  showAffPopup('剑法 +' + amount);
+  showAffPopup('剑法 +' + actual);
   updateCultPanel();
 }
 
@@ -786,11 +839,39 @@ function checkBreakthrough() {
     c.lingli -= c.lingliMax;
     c.realmLevel++;
     c.realm = REALM_NAMES[c.realmLevel - 1];
-    c.lingliMax = REALM_LINGLI_MAX[c.realmLevel - 1];
+    c.lingliMax = curLingliMax();
     showAffPopup('境界突破：' + c.realm + '！');
     // 突破奖励：自由行动+1
     c.freeActions = Math.min(3, c.freeActions + 1);
   }
+}
+
+// 应用开局身份加成（在身份确认时调用）
+function applyIdentityBonus() {
+  const c = state.cultivation;
+  const lg = LINGGEN_BONUS[state.linggen] || LINGGEN_BONUS['伪灵根'];
+  const mc = MAINCULT_BONUS[state.mainCult] || MAINCULT_BONUS['法修'];
+  const dp = DAOPATH_BONUS[state.daoPath] || DAOPATH_BONUS['凡尘道'];
+
+  // 起手灵力 / 剑法
+  c.swordArt += (lg.swordStart || 0) + (mc.swordStart || 0);
+  c.lingli = Math.min(c.lingliMax, c.lingli + (lg.lingliStart || 0) + (mc.lingliStart || 0));
+  // 灵力上限按灵根倍率重算
+  c.lingliMax = curLingliMax();
+  c.lingli = Math.min(c.lingli, c.lingliMax);
+
+  // 修道方向起手好感
+  for (const k in (dp.aff || {})) {
+    state.affection[k] = (state.affection[k] || 0) + dp.aff[k];
+  }
+
+  // 重新校验剑法境界（剑修起手可能直接到"熟练"）
+  const newLevel = Math.min(5, Math.floor(c.swordArt / 50));
+  c.swordArtLevel = SWORD_LEVELS[newLevel];
+
+  checkBreakthrough();
+  updateAffectionUI();
+  updateCultPanel();
 }
 
 function updateCultPanel() {
@@ -801,7 +882,9 @@ function updateCultPanel() {
   document.getElementById('cult-sword').textContent = c.swordArtLevel + '（' + c.swordArt + '）';
   document.getElementById('cult-years').textContent = c.years + ' 年';
   document.getElementById('cult-free').textContent = c.freeActions;
-  document.getElementById('cult-linggen').textContent = c.linggen;
+  document.getElementById('cult-linggen').textContent = state.linggen;
+  document.getElementById('cult-daopath').textContent = state.daoPath;
+  document.getElementById('cult-maincult').textContent = state.mainCult;
 }
 
 // 切换面板显隐
@@ -1020,7 +1103,14 @@ function place_practice(cb) {
 }
 
 function place_meditate(cb) {
-  addNarration('你在东峰静室盘膝吐纳。伪灵根吸纳灵气极慢，但你耐着性子。');
+  const medText = {
+    '天灵根': '你在东峰静室盘膝吐纳。天灵根吸纳灵气如海纳百川，灵力沿经脉周天而行。',
+    '异灵根': '你在东峰静室盘膝吐纳。异灵根灵气驳杂，你须分心压制其中一丝异色。',
+    '双灵根': '你在东峰静室盘膝吐纳。两道灵根并行不悖，吸纳平稳。',
+    '杂灵根': '你在东峰静室盘膝吐纳。杂灵根吸纳灵气偏慢，但你耐着性子。',
+    '伪灵根': '你在东峰静室盘膝吐纳。伪灵根吸纳灵气极慢，但你耐着性子。'
+  };
+  addNarration(medText[state.linggen] || medText['伪灵根']);
   addLingli(25); addYears(2);
   setTimeout(cb, 1800);
 }
@@ -1098,7 +1188,7 @@ function place_market(cb) {
   setTimeout(cb, 1800);
 }
 
-// ==================== 序章 ====================
+// ==================== 序章（多步身份创建） ====================
 function scene_prologue() {
   clearText();
   setChapterBg(1);
@@ -1106,23 +1196,24 @@ function scene_prologue() {
   addNarration('七峰并立，仙道四峰主修灵力，魔道两峰主修魔气。唯有东峰——仙魔同修，不偏不倚。');
   addNarration('然而三百年前一场变故，东峰没落，沦为七峰之末。');
   addNarration('');
-  addNarration('你叫——');
-  
+  addNarration('——你将作为一介凡人，踏入这卷残篇。');
+  addNarration('');
+  addNarration('首先，你叫什么名字？');
+
+  // 第①步：起名
   const area = document.getElementById('text-area');
   const div = document.createElement('div');
   div.className = 'text-line';
-  // 输入框 + 随机名建议按钮
   div.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <input id="name-input" placeholder="输入你的名字" maxlength="6">
+      <input id="name-input" placeholder="输入你的名字" maxlength="6" style="flex:1;min-width:160px;">
       <button id="random-name-btn" class="choice-btn" style="padding:6px 14px;font-size:13px;flex:none;">随机</button>
     </div>
     <div id="name-hint" style="font-size:12px;color:#807060;margin-top:8px;letter-spacing:1px;"></div>
   `;
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;
-  
-  // 随机名库
+
   const surnames = ['沈','李','张','王','慕','林','苏','陈','柳','叶','云','顾','白','江','南'];
   const givenM = ['怀舟','寒渊','长离','清珩','砚秋','景行','怀瑾','明序','知微','望舒','朝辞','叙之'];
   const givenF = ['疏影','知夏','南乔','念卿','若棠','昭昭','予安','云晚','听雪','挽意','岁宁','昭月'];
@@ -1132,7 +1223,6 @@ function scene_prologue() {
     const g = pool[Math.floor(Math.random()*pool.length)];
     return s + g;
   };
-  
   document.getElementById('random-name-btn').onclick = () => {
     const n = genRandom();
     document.getElementById('name-input').value = n;
@@ -1141,19 +1231,109 @@ function scene_prologue() {
   document.getElementById('name-input').addEventListener('input', (e) => {
     document.getElementById('name-hint').textContent = e.target.value ? '▸ ' + e.target.value : '';
   });
-  
+
   const container = document.getElementById('choices');
   container.innerHTML = '';
   const btn = document.createElement('button');
   btn.className = 'choice-btn';
-  btn.textContent = '确 定';
+  btn.textContent = '下一步：择灵根';
   btn.onclick = () => {
     const name = document.getElementById('name-input').value.trim() || '无名';
     state.playerName = name;
-    updateCultPanel();
-    scene_chapter1_intro();
+    scene_prologue_linggen();
   };
   container.appendChild(btn);
+}
+
+// 第②步：选择灵根
+function scene_prologue_linggen() {
+  clearText();
+  setChapterBg(1);
+  addNarration(`「${state.playerName}」——测灵石前，你的手在抖。`);
+  addNarration('灵根，乃修士之基。你的灵根是——');
+  addNarration('');
+  addNarration('（灵根决定灵力增长倍率与上限，影响后续修炼效率）');
+
+  const options = Object.keys(LINGGEN_BONUS).map(lg => ({
+    text: lg,
+    result: LINGGEN_BONUS[lg].note,
+    effect: () => { state.linggen = lg; },
+    next: scene_prologue_daopath
+  }));
+  showChoices(options);
+}
+
+// 第③步：选择修道方向
+function scene_prologue_daopath() {
+  clearText();
+  addNarration(`灵根已定：${state.linggen}。`);
+  addNarration('道心，决定你立身之本。你要走哪一条道？');
+  addNarration('');
+  addNarration('（道向决定起手好感倾向，也关乎日后心境抉择）');
+
+  const options = Object.keys(DAOPATH_BONUS).map(dp => ({
+    text: dp,
+    result: DAOPATH_BONUS[dp].note,
+    effect: () => { state.daoPath = dp; },
+    next: scene_prologue_maincult
+  }));
+  showChoices(options);
+}
+
+// 第④步：选择主修方向
+function scene_prologue_maincult() {
+  clearText();
+  addNarration(`道已立：${state.daoPath}。`);
+  addNarration('仙途漫漫，需择一术为根本。你主修——');
+  addNarration('');
+  addNarration('（主修决定剑法与灵力的成长侧重，并赋予起手属性）');
+
+  const options = Object.keys(MAINCULT_BONUS).map(mc => ({
+    text: mc,
+    result: MAINCULT_BONUS[mc].note,
+    effect: () => { state.mainCult = mc; },
+    next: scene_prologue_confirm
+  }));
+  showChoices(options);
+}
+
+// 第⑤步：身份确认
+function scene_prologue_confirm() {
+  clearText();
+  addNarration('——身份已成——');
+  addNarration('');
+  addNarration(`姓名：${state.playerName}`);
+  addNarration(`灵根：${state.linggen}`);
+  addNarration(`道向：${state.daoPath}`);
+  addNarration(`主修：${state.mainCult}`);
+  addNarration('');
+  addNarration('（以上选择将影响你日后的修炼效率、好感倾向与剧情走向，确认后不可更改。）');
+
+  const container = document.getElementById('choices');
+  container.innerHTML = '';
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.className = 'choice-btn';
+  confirmBtn.textContent = '踏入仙途';
+  confirmBtn.onclick = () => {
+    // 应用所有身份加成
+    applyIdentityBonus();
+    scene_chapter1_intro();
+  };
+  container.appendChild(confirmBtn);
+
+  const redoBtn = document.createElement('button');
+  redoBtn.className = 'choice-btn';
+  redoBtn.textContent = '重新选择';
+  redoBtn.style.opacity = '0.7';
+  redoBtn.onclick = () => {
+    // 仅保留名字，重置其余
+    state.linggen = '伪灵根';
+    state.daoPath = '凡尘道';
+    state.mainCult = '法修';
+    scene_prologue_linggen();
+  };
+  container.appendChild(redoBtn);
 }
 
 // ==================== 第一章 ====================
@@ -1162,10 +1342,17 @@ function scene_chapter1_intro() {
   setChapterBg(1);
   addNarration(`你叫${state.playerName}，凡间孤女，被昆仑仙宗下山收徒的执事顺手带回。`);
   addNarration('测灵根那天，你伸出测灵石的手在抖。');
-  addNarration('测灵石亮了——很暗，很弱。');
-  addNarration('伪灵根。仙道修炼速度极慢，几无结丹可能。');
+  // 根据所选灵根显示不同测灵石文案
+  const lgText = {
+    '天灵根': '测灵石亮起一片金光，照得满堂皆惊。天灵根——万中无一。',
+    '异灵根': '测灵石亮起一抹异色，电光与黑气交缠。异灵根——主事者皱了皱眉。',
+    '双灵根': '测灵石亮起两道不同色的光。双灵根——中庸之资，不显不弱。',
+    '杂灵根': '测灵石亮起驳杂五色，光晕散乱。杂灵根——修速偏慢，根基却稳。',
+    '伪灵根': '测灵石亮了——很暗，很弱。伪灵根。仙道修炼速度极慢，几无结丹可能。'
+  };
+  addNarration(lgText[state.linggen] || lgText['伪灵根']);
   addNarration('');
-  addNarration('仙道四峰的峰主看了一眼，纷纷摇头。');
+  addNarration('仙道四峰的峰主看了一眼，各有计较。');
   addNarration('最后，你被分到了最冷清的东峰。');
   addNarration('');
   addNarration('东峰之上，桃树成林，却无人打理。你走着走着，迷了路。');
@@ -1260,17 +1447,17 @@ function scene_c1_rongzhao() {
   addDialogue('容昭', '伸出手。', 'rongzhao');
   addNarration('你伸出测灵石。他指尖点在测灵石上，灵力探入。');
   addNarration('片刻，他收回手。');
-  addDialogue('容昭', '伪灵根。……能修。', 'rongzhao');
+  addDialogue('容昭', `${state.linggen}。……能修。`, 'rongzhao');
   addNarration('声音很轻，像在说给自己听。');
   addNarration('');
   addNarration('然后他又低下头看书，像是你从未来过。');
   addNarration('你站在殿中，不知道该走还是该留。');
   addNarration('你鼓起勇气，问了一句——');
-  
+
   showChoices([
     {
       text: '「师尊，我……还能留在东峰吗？」',
-      result: '他翻书的手停了一瞬。测灵根后你没有追问「为什么我是伪灵根」，也没有露出失望的表情。你只是点了点头，说了声「哦」。他觉得你安静——安静到他愿意让你留下。',
+      result: `他翻书的手停了一瞬。测灵根后你没有追问「为什么我是${state.linggen}」，也没有露出失望的表情。你只是点了点头，说了声「哦」。他觉得你安静——安静到他愿意让你留下。`,
       effect: () => changeAffection('rongzhao', 18),
       next: scene_c1_rongzhao_deeper
     },
@@ -2388,8 +2575,10 @@ function restartGame() {
     flags: {},
     chapter: 1,
     playerName: '',
+    linggen: '伪灵根',
+    daoPath: '凡尘道',
+    mainCult: '法修',
     cultivation: {
-      linggen: '伪灵根',
       realm: '练气一层',
       realmLevel: 1,
       lingli: 0,
