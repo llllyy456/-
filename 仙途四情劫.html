@@ -101,19 +101,17 @@ body {
 /* 状态栏 */
 #status-bar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 22px;
-  background: linear-gradient(180deg, rgba(25, 18, 38, 0.85), rgba(15, 10, 25, 0.85));
-  border: 1px solid rgba(180, 150, 100, 0.25);
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 22px 14px;
+  background: linear-gradient(180deg, rgba(25, 18, 38, 0.88), rgba(15, 10, 25, 0.88));
+  border: 1px solid rgba(180, 150, 100, 0.3);
   border-radius: 10px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   margin-bottom: 14px;
-  flex-wrap: wrap;
-  gap: 12px;
   position: relative;
-  box-shadow: 
+  box-shadow:
     0 4px 20px rgba(0,0,0,0.4),
     inset 0 1px 0 rgba(220, 190, 130, 0.08);
 }
@@ -131,35 +129,133 @@ body {
 #status-bar::before { left: 8px; }
 #status-bar::after { right: 8px; }
 
+/* 主线：修炼进度条区（顶部常驻） */
+.cult-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 4px 12px 0;
+}
+.cult-main .realm-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, rgba(200,170,110,0.18), rgba(160,130,80,0.08));
+  border: 1px solid rgba(220,190,130,0.4);
+  border-radius: 20px;
+  font-size: 13px;
+  color: #f0e0c0;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  box-shadow: 0 0 10px rgba(220,190,130,0.18);
+}
+.cult-main .realm-tag .rank {
+  font-size: 11px;
+  color: #a09070;
+  border-left: 1px solid rgba(200,170,110,0.35);
+  padding-left: 8px;
+  margin-left: 4px;
+  letter-spacing: 1px;
+}
+.cult-main .lingli-bar-wrap {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cult-main .lingli-bar {
+  flex: 1;
+  height: 12px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+  position: relative;
+}
+.cult-main .lingli-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #6090c0, #90c0e0, #b0e0f0);
+  border-radius: 6px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(144, 192, 224, 0.6);
+  position: relative;
+}
+.cult-main .lingli-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer 2.5s linear infinite;
+}
+.cult-main .lingli-text {
+  font-size: 12px;
+  color: #c0d0e0;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.cult-main .attr-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.cult-main .chip {
+  font-size: 11px;
+  color: #b0a888;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(180,150,100,0.2);
+  border-radius: 12px;
+  padding: 3px 9px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.cult-main .chip b { color: #f0e0c0; font-weight: 500; }
+
+/* 副线：好感度区（次要栏） */
+.cult-sub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0 12px;
+  border-top: 1px dashed rgba(180,150,100,0.18);
+  padding-top: 8px;
+}
 #chapter-title {
-  font-size: 15px;
-  color: #d0b080;
-  letter-spacing: 4px;
+  font-size: 13px;
+  color: #a09070;
+  letter-spacing: 3px;
   font-weight: 500;
-  text-shadow: 0 0 8px rgba(208, 176, 128, 0.3);
   padding-left: 14px;
+  opacity: 0.85;
 }
 #affection-panel {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   flex-wrap: wrap;
   padding-right: 14px;
 }
 .aff-item {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 11px;
   transition: transform 0.3s ease;
+  opacity: 0.92;
 }
-.aff-item:hover { transform: translateY(-2px); }
-.aff-name { 
-  color: #a09070; 
+.aff-item:hover { transform: translateY(-2px); opacity: 1; }
+.aff-name {
+  color: #a09070;
   letter-spacing: 1px;
 }
 .aff-bar {
-  width: 64px;
-  height: 7px;
+  width: 54px;
+  height: 6px;
   background: rgba(255,255,255,0.08);
   border-radius: 4px;
   overflow: hidden;
@@ -189,9 +285,9 @@ body {
 .aff-fill.lihanyuan { background: linear-gradient(90deg, #c04040, #e06060); color: #e06060; }
 .aff-fill.rongzhao { background: linear-gradient(90deg, #6090c0, #90c0e0); color: #90c0e0; }
 .aff-fill.muchangli { background: linear-gradient(90deg, #b090d0, #d0b0e0); color: #d0b0e0; }
-.aff-value { 
-  color: #d0c0a0; 
-  min-width: 22px; 
+.aff-value {
+  color: #d0c0a0;
+  min-width: 22px;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -652,30 +748,52 @@ body {
 
 <div id="game" style="display:none;">
   <div id="status-bar">
-    <div id="chapter-title">第一章 · 初入昆仑</div>
-    <div id="affection-panel">
-      <div class="aff-item">
-        <span class="aff-name">怀舟</span>
-        <div class="aff-bar"><div class="aff-fill shenhuaizhou" id="aff-shenhuaizhou"></div></div>
-        <span class="aff-value" id="val-shenhuaizhou">0</span>
+    <!-- 主线：修炼进度条与基础属性（顶部常驻） -->
+    <div class="cult-main">
+      <span class="realm-tag">
+        <span id="bar-realm">练气一层</span>
+        <span class="rank" id="bar-rank">杂役弟子</span>
+      </span>
+      <div class="lingli-bar-wrap">
+        <div class="lingli-bar"><div class="lingli-fill" id="bar-lingli-fill"></div></div>
+        <span class="lingli-text" id="bar-lingli-text">0/100</span>
       </div>
-      <div class="aff-item">
-        <span class="aff-name">寒渊</span>
-        <div class="aff-bar"><div class="aff-fill lihanyuan" id="aff-lihanyuan"></div></div>
-        <span class="aff-value" id="val-lihanyuan">0</span>
+      <div class="attr-chips">
+        <span class="chip">灵根 <b id="bar-linggen">伪灵根</b></span>
+        <span class="chip">主修 <b id="bar-maincult">法修</b></span>
+        <span class="chip">剑法 <b id="bar-sword">入门</b></span>
+        <span class="chip">骨龄 <b id="bar-boneage">14</b></span>
+        <span class="chip">寿元 <b id="bar-lifespan">120</b></span>
+        <span class="chip">行动 <b id="bar-free">1</b></span>
       </div>
-      <div class="aff-item">
-        <span class="aff-name">容昭</span>
-        <div class="aff-bar"><div class="aff-fill rongzhao" id="aff-rongzhao"></div></div>
-        <span class="aff-value" id="val-rongzhao">0</span>
-      </div>
-      <div class="aff-item">
-        <span class="aff-name">长离</span>
-        <div class="aff-bar"><div class="aff-fill muchangli" id="aff-muchangli"></div></div>
-        <span class="aff-value" id="val-muchangli">0</span>
+      <button id="cult-btn" onclick="toggleCultPanel()">详</button>
+    </div>
+    <!-- 副线：好感度（恋爱支线，次要栏） -->
+    <div class="cult-sub">
+      <div id="chapter-title">仙途·初入昆仑</div>
+      <div id="affection-panel">
+        <div class="aff-item">
+          <span class="aff-name">怀舟</span>
+          <div class="aff-bar"><div class="aff-fill shenhuaizhou" id="aff-shenhuaizhou"></div></div>
+          <span class="aff-value" id="val-shenhuaizhou">0</span>
+        </div>
+        <div class="aff-item">
+          <span class="aff-name">寒渊</span>
+          <div class="aff-bar"><div class="aff-fill lihanyuan" id="aff-lihanyuan"></div></div>
+          <span class="aff-value" id="val-lihanyuan">0</span>
+        </div>
+        <div class="aff-item">
+          <span class="aff-name">容昭</span>
+          <div class="aff-bar"><div class="aff-fill rongzhao" id="aff-rongzhao"></div></div>
+          <span class="aff-value" id="val-rongzhao">0</span>
+        </div>
+        <div class="aff-item">
+          <span class="aff-name">长离</span>
+          <div class="aff-bar"><div class="aff-fill muchangli" id="aff-muchangli"></div></div>
+          <span class="aff-value" id="val-muchangli">0</span>
+        </div>
       </div>
     </div>
-    <button id="cult-btn" onclick="toggleCultPanel()">道</button>
   </div>
   
   <!-- 修仙面板（角色玉牌） -->
@@ -747,15 +865,15 @@ let state = {
 };
 
 // ==================== 身份加成表 ====================
-// 灵根体系：天灵根/真灵根/变异灵根/双灵根/杂灵根/伪灵根
-// 灵根：灵力倍率 / 灵力上限倍率 / 初始剑法 / 起手灵力 / 寿元加成 / 文案
+// 灵根体系（按修炼速度从快到慢排列）：
+// 天灵根 > 变异灵根 > 真灵根 > 双灵根 > 杂灵根 > 伪灵根
 const LINGGEN_BONUS = {
-  '天灵根':   { lingliMul: 1.7, lingliMaxMul: 1.30, swordStart: 0,  lingliStart: 35, life: 80,  note: '单一属性纯粹无杂。结丹前无瓶颈，绝世天才，各大宗门抢破头。然资质太显，易招祸端。' },
-  '真灵根':   { lingliMul: 1.3, lingliMaxMul: 1.10, swordStart: 0,  lingliStart: 18, life: 40,  note: '两到三种属性并存。修速中上，乃修仙界中坚力量，胜在稳固。' },
-  '变异灵根': { lingliMul: 1.55,lingliMaxMul: 1.20, swordStart: 0,  lingliStart: 25, life: 50,  note: '五行异变而生（冰/雷/风）。单一变异者修速冠绝三界，战力远超同阶，然灵气驳杂，与魔修易生共鸣。' },
-  '双灵根':   { lingliMul: 1.05,lingliMaxMul: 1.00, swordStart: 0,  lingliStart: 12, life: 10,  note: '两种灵根并存。中庸之姿，胜在平稳，少有瓶颈。' },
-  '杂灵根':   { lingliMul: 0.80,lingliMaxMul: 0.92, swordStart: 0,  lingliStart: 5,  life: 0,   note: '四到五种属性俱全，无一精通。修速龟爬，多为底层杂役。然根基反稳，少有走火入魔之虞。' },
-  '伪灵根':   { lingliMul: 0.60,lingliMaxMul: 0.88, swordStart: 5,  lingliStart: 0,  life: -10, note: '仙道废材。修速极慢，几无结丹可能，然凡事认真者，或可另辟蹊径。' }
+  '天灵根':   { lingliMul: 1.7,  lingliMaxMul: 1.30, swordStart: 0,  lingliStart: 35, life: 80,  speed: '极快', note: '单一属性纯粹无杂。结丹前无瓶颈，绝世天才，各大宗门抢破头。然资质太显，易招祸端。' },
+  '变异灵根': { lingliMul: 1.55, lingliMaxMul: 1.20, swordStart: 0,  lingliStart: 25, life: 50,  speed: '极快', note: '五行异变而生（冰/雷/风）。单一变异者修速冠绝三界，战力远超同阶，然灵气驳杂，与魔修易生共鸣。' },
+  '真灵根':   { lingliMul: 1.3,  lingliMaxMul: 1.10, swordStart: 0,  lingliStart: 18, life: 40,  speed: '中上', note: '两到三种属性并存。修速中上，乃修仙界中坚力量，胜在稳固。' },
+  '双灵根':   { lingliMul: 1.05, lingliMaxMul: 1.00, swordStart: 0,  lingliStart: 12, life: 10,  speed: '中等', note: '两种灵根并存。中庸之姿，胜在平稳，少有瓶颈。' },
+  '杂灵根':   { lingliMul: 0.80, lingliMaxMul: 0.92, swordStart: 0,  lingliStart: 5,  life: 0,   speed: '偏慢', note: '四到五种属性俱全，无一精通。修速龟爬，多为底层杂役。然根基反稳，少有走火入魔之虞。' },
+  '伪灵根':   { lingliMul: 0.60, lingliMaxMul: 0.88, swordStart: 5,  lingliStart: 0,  life: -10, speed: '极慢', note: '仙道废材。修速极慢，几无结丹可能，然凡事认真者，或可另辟蹊径。' }
 };
 
 // 修道方向：起手好感加成 / 寿元加成 / 描述
@@ -914,13 +1032,35 @@ function checkBreakthrough() {
     c.discipleRank = rankByRealm(c.realmLevel);
     showAffPopup('境界突破：' + c.realm + '！');
     showAffPopup('弟子等级：' + c.discipleRank);
-    // 突破奖励：自由行动+1
-    c.freeActions = Math.min(3, c.freeActions + 1);
+    // 突破奖励：行动点+1
+    c.freeActions = Math.min(5, c.freeActions + 1);
+    // 境界里程碑叙事（主线感）
+    const milestone = {
+      2: '你隐隐感到丹田之中灵力又凝实了一分——练气二层。',
+      5: '灵气在经脉中已能自如流转，你正式晋升为外门弟子。',
+      9: '练气九层，瓶颈如山。你咬牙苦撑，灵力终于凝成一线——',
+      10: '筑基成功！你以自身为炉，铸就道基。从此寿元两百，驻颜不老，晋升内门弟子。',
+      11: '金丹结成，金光满室。你已为宗门中坚，名震一峰。',
+      12: '元婴出窍！你神识可离体而行，三界之门，向你半开。',
+      13: '渡劫！九重雷劫滚滚而下，你以道心硬扛。',
+      14: '大乘！你已是人间少有的高手，举手投足皆能引动天地。',
+      15: '飞升！云海翻涌，仙音隐隐。你踏入仙途之巅——'
+    };
+    if (milestone[c.realmLevel]) {
+      setTimeout(() => addNarration('【修炼里程碑】' + milestone[c.realmLevel]), 600);
+    }
     // 筑基期及以上：外表年龄驻颜
     if (c.realmLevel >= 10) {
       c.appearAge = c.appearAge; // 保持不变
     }
   }
+}
+
+// 幕间发放行动点（每幕开始时补充）
+function grantActionPoints(n) {
+  const c = state.cultivation;
+  c.freeActions = Math.min(5, Math.max(c.freeActions, n));
+  updateTopBar();
 }
 
 // 应用开局身份加成（在身份确认时调用）
@@ -1010,6 +1150,23 @@ function updateCultPanel() {
   document.getElementById('cult-weapon').textContent = state.weapon;
   document.getElementById('cult-killer').textContent = state.killer;
   document.getElementById('cult-weakness').textContent = state.weakness;
+  // 同步顶部常驻栏
+  updateTopBar();
+}
+
+// 顶部修炼进度条与基础属性
+function updateTopBar() {
+  const c = state.cultivation;
+  document.getElementById('bar-realm').textContent = c.realm;
+  document.getElementById('bar-rank').textContent = c.discipleRank;
+  document.getElementById('bar-lingli-fill').style.width = (c.lingli / c.lingliMax * 100) + '%';
+  document.getElementById('bar-lingli-text').textContent = c.lingli + '/' + c.lingliMax;
+  document.getElementById('bar-linggen').textContent = state.linggen;
+  document.getElementById('bar-maincult').textContent = state.mainCult;
+  document.getElementById('bar-sword').textContent = c.swordArtLevel;
+  document.getElementById('bar-boneage').textContent = c.boneAge;
+  document.getElementById('bar-lifespan').textContent = (c.lifespan >= 99999 ? '无尽' : c.lifespan);
+  document.getElementById('bar-free').textContent = c.freeActions;
 }
 
 // 切换面板显隐
@@ -1068,8 +1225,9 @@ function setChapterBg(ch) {
   const bg = document.getElementById('bg-layer');
   bg.className = '';
   if (ch >= 1 && ch <= 5) bg.classList.add('chapter' + ch);
-  document.getElementById('chapter-title').textContent = 
-    ['', '第一章 · 初入昆仑', '第二章 · 宗门禁忌', '第三章 · 入世历练', '第四章 · 秘境迷渊', '第五章 · 三界动荡'][ch] || '';
+  // 改为"幕"标记，弱化章节感
+  document.getElementById('chapter-title').textContent =
+    ['', '仙途·初入昆仑', '仙途·宗门旧事', '仙途·入世历练', '仙途·秘境迷渊', '仙途·三界动荡'][ch] || '仙途';
 }
 
 function createStars() {
@@ -1102,23 +1260,23 @@ function createPetals() {
 // 显示自由行动菜单：根据章节解锁不同地点
 function showFreeAction(nextScene, customTitle) {
   clearText();
-  addNarration(customTitle || '——自由行动——');
-  addNarration('剩余行动次数：' + state.cultivation.freeActions + ' 次');
-  addNarration('（每次行动消耗 1 次，可选地点见下方）');
+  addNarration(customTitle || '——自由行动·行动点可用——');
+  addNarration('剩余行动点：' + state.cultivation.freeActions + ' 点');
+  addNarration('（每次行动消耗 1 点。主线为修炼，恋爱为支线，可自由选择去处推进剧情）');
   addNarration('');
-  
+
   const places = getAvailablePlaces();
-  
-  // 无剩余次数：直接进入下一剧情
+
+  // 无剩余行动点：直接进入下一幕
   if (state.cultivation.freeActions <= 0) {
     addNarration('你今日已无心外游，早早歇下。');
     setTimeout(() => nextScene(), 1500);
     return;
   }
-  
+
   const container = document.getElementById('choices');
   container.innerHTML = '';
-  
+
   places.forEach(p => {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
@@ -1128,23 +1286,23 @@ function showFreeAction(nextScene, customTitle) {
       state.cultivation.freeActions--;
       updateCultPanel();
       p.action(() => {
-        // 行动结束：若还有次数，继续；否则进入下一剧情
+        // 行动结束：若还有行动点，继续选择；否则进入下一幕
         if (state.cultivation.freeActions > 0) {
-          showFreeAction(nextScene, '——还可再去一处——');
+          showFreeAction(nextScene, '——还可再去一处·行动点剩余——');
         } else {
           addNarration('');
-          addNarration('今日事毕。');
+          addNarration('行动点耗尽。今日事毕。');
           setTimeout(() => nextScene(), 1500);
         }
       });
     };
     container.appendChild(btn);
   });
-  
+
   // 跳过选项
   const skipBtn = document.createElement('button');
   skipBtn.className = 'choice-btn';
-  skipBtn.textContent = '直接歇下（跳过自由行动）';
+  skipBtn.textContent = '歇下（跳过本轮自由行动）';
   skipBtn.style.opacity = '0.7';
   skipBtn.onclick = () => {
     container.innerHTML = '';
@@ -1372,17 +1530,17 @@ function scene_prologue() {
   container.appendChild(btn);
 }
 
-// 第②步：选择灵根
+// 第②步：选择灵根（按修炼速度从快到慢排列）
 function scene_prologue_linggen() {
   clearText();
   setChapterBg(1);
   addNarration(`「${state.playerName}」——测灵石前，你的手在抖。`);
-  addNarration('灵根，乃修士之基。你的灵根是——');
+  addNarration('灵根，乃修士之基。下列灵根按修炼速度从快到慢排列：');
   addNarration('');
   addNarration('（灵根决定灵力增长倍率与上限，影响后续修炼效率）');
 
   const options = Object.keys(LINGGEN_BONUS).map(lg => ({
-    text: lg,
+    text: `${lg}　〔修速：${LINGGEN_BONUS[lg].speed}〕`,
     result: LINGGEN_BONUS[lg].note,
     effect: () => { state.linggen = lg; },
     next: scene_prologue_daopath
@@ -1690,11 +1848,12 @@ function scene_c1_end() {
   addNarration('就这样，你成了东峰的第四名弟子。');
   addNarration('东峰只有四个人——你、大师兄沈怀舟、师尊容昭，还有一个常年在魔渊洞闭关的「二师姐」。');
   addNarration('');
-  addNarration('——第一章 完——');
+  addNarration('——此幕暂歇·东峰夜行——');
   state.flags.metRongzhao = true;  // 解锁书房地点
   
   setTimeout(() => {
     state.chapter = 2;
+    grantActionPoints(2);
     showFreeAction(scene_chapter2_start, '——入夜，可在东峰各处走动——');
   }, 2500);
 }
@@ -1914,11 +2073,12 @@ function scene_c2_end() {
   addNarration('');
   addNarration('没有署名。但字迹很新，墨还没干透。');
   addNarration('');
-  addNarration('——第二章 完——');
+  addNarration('——此幕暂歇·旧事翻页——');
   state.flags.foundVoice = true;  // 解锁后山残痕地点
   
   setTimeout(() => {
     state.chapter = 3;
+    grantActionPoints(2);
     showFreeAction(scene_chapter3_start, '——近来事多，可在宗内各处散心——');
   }, 2500);
 }
@@ -2099,10 +2259,11 @@ function scene_c3_end() {
   addNarration('梦醒了。你睁开眼，发现枕边多了一枝桃花。');
   addNarration('花瓣上还沾着露水。这个时节，东峰的桃花早就谢了。');
   addNarration('');
-  addNarration('——第三章 完——');
+  addNarration('——此幕暂歇·梦醒桃枝——');
   
   setTimeout(() => {
     state.chapter = 4;
+    grantActionPoints(3);
     showFreeAction(scene_chapter4_start, '——秘境在即，最后整理心境——');
   }, 2500);
 }
@@ -2409,12 +2570,11 @@ function scene_c4_muchangli_mark() {
 
 function finishChapter4() {
   addNarration('');
-  addNarration('——第四章 完——');
+  addNarration('——此幕暂歇·秘境归来——');
   state.chapter = 5;
   setTimeout(() => {
-    // 终章前的最后自由行动：补足好感/灵力的机会
-    state.cultivation.freeActions = Math.max(state.cultivation.freeActions, 2);
-    updateCultPanel();
+    // 终章前最后行动点：补足好感/灵力的机会
+    grantActionPoints(3);
     showFreeAction(scene_chapter5_start, '——风起前夜，最后再走一走——');
   }, 2500);
 }
