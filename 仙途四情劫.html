@@ -14,7 +14,6 @@ body {
   overflow: hidden;
 }
 
-/* 背景层 */
 #bg-layer {
   position: fixed;
   inset: 0;
@@ -28,7 +27,6 @@ body {
 #bg-layer.chapter4 { background: radial-gradient(ellipse at 50% 30%, #1a1a2a 0%, #0a0a1a 60%, #05050a 100%); }
 #bg-layer.chapter5 { background: radial-gradient(ellipse at 50% 30%, #2a2a1a 0%, #1a1a0a 60%, #0a0a05 100%); }
 
-/* 星光粒子 */
 .star {
   position: fixed;
   width: 2px; height: 2px;
@@ -43,7 +41,6 @@ body {
   50% { opacity: 0.6; }
 }
 
-/* 主容器 */
 #game {
   position: relative;
   z-index: 10;
@@ -55,7 +52,6 @@ body {
   padding: 20px;
 }
 
-/* 状态栏 */
 #status-bar {
   display: flex;
   justify-content: space-between;
@@ -76,7 +72,7 @@ body {
 }
 #affection-panel {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   flex-wrap: wrap;
 }
 .aff-item {
@@ -99,13 +95,12 @@ body {
   border-radius: 3px;
   transition: width 0.6s ease;
 }
-.aff-fill.xieyunzhou { background: linear-gradient(90deg, #e8c8a0, #f0e0c0); }
-.aff-fill.xiejiuyuan { background: linear-gradient(90deg, #c04040, #e06060); }
+.aff-fill.shenhuaizhou { background: linear-gradient(90deg, #e8c8a0, #f0e0c0); }
+.aff-fill.lihanyuan { background: linear-gradient(90deg, #c04040, #e06060); }
 .aff-fill.rongzhao { background: linear-gradient(90deg, #6090c0, #90c0e0); }
-.aff-fill.sumoyuan { background: linear-gradient(90deg, #b090d0, #d0b0e0); }
+.aff-fill.muchangli { background: linear-gradient(90deg, #b090d0, #d0b0e0); }
 .aff-value { color: #d0c0a0; min-width: 20px; text-align: right; }
 
-/* 文本区域 */
 #text-area {
   flex: 1;
   overflow-y: auto;
@@ -134,14 +129,13 @@ body {
 .narration { color: #b0a890; font-style: italic; }
 .dialogue { color: #e8e0d0; }
 .dialogue .speaker { color: #d0b080; font-weight: bold; margin-right: 8px; }
-.dialogue.xieyunzhou .speaker { color: #f0d0a0; }
-.dialogue.xiejiuyuan .speaker { color: #e06060; }
+.dialogue.shenhuaizhou .speaker { color: #f0d0a0; }
+.dialogue.lihanyuan .speaker { color: #e06060; }
 .dialogue.rongzhao .speaker { color: #90c0e0; }
-.dialogue.sumoyuan .speaker { color: #d0b0e0; }
+.dialogue.muchangli .speaker { color: #d0b0e0; }
 .thought { color: #9080a0; font-style: italic; }
 .highlight { color: #f0d080; font-weight: bold; }
 
-/* 选项区域 */
 #choices {
   display: flex;
   flex-direction: column;
@@ -181,7 +175,6 @@ body {
 }
 .choice-btn:hover::before { opacity: 1; }
 
-/* 开始界面 */
 #start-screen {
   position: fixed;
   inset: 0;
@@ -234,7 +227,6 @@ body {
   letter-spacing: 10px;
 }
 
-/* 结局界面 */
 #ending-screen {
   position: fixed;
   inset: 0;
@@ -281,7 +273,6 @@ body {
   box-shadow: 0 0 30px rgba(200, 170, 110, 0.2);
 }
 
-/* 好感度提示 */
 .aff-popup {
   position: fixed;
   top: 50%;
@@ -317,7 +308,6 @@ body {
 
 <div id="bg-layer"></div>
 
-<!-- 开始界面 -->
 <div id="start-screen">
   <h1>仙途</h1>
   <div class="subtitle">四 情 劫</div>
@@ -329,20 +319,19 @@ body {
   <button class="start-btn" onclick="startGame()">开 始</button>
 </div>
 
-<!-- 游戏主界面 -->
 <div id="game" style="display:none;">
   <div id="status-bar">
     <div id="chapter-title">第一章 · 初入昆仑</div>
     <div id="affection-panel">
       <div class="aff-item">
-        <span class="aff-name">云舟</span>
-        <div class="aff-bar"><div class="aff-fill xieyunzhou" id="aff-xieyunzhou"></div></div>
-        <span class="aff-value" id="val-xieyunzhou">0</span>
+        <span class="aff-name">怀舟</span>
+        <div class="aff-bar"><div class="aff-fill shenhuaizhou" id="aff-shenhuaizhou"></div></div>
+        <span class="aff-value" id="val-shenhuaizhou">0</span>
       </div>
       <div class="aff-item">
-        <span class="aff-name">九渊</span>
-        <div class="aff-bar"><div class="aff-fill xiejiuyuan" id="aff-xiejiuyuan"></div></div>
-        <span class="aff-value" id="val-xiejiuyuan">0</span>
+        <span class="aff-name">寒渊</span>
+        <div class="aff-bar"><div class="aff-fill lihanyuan" id="aff-lihanyuan"></div></div>
+        <span class="aff-value" id="val-lihanyuan">0</span>
       </div>
       <div class="aff-item">
         <span class="aff-name">容昭</span>
@@ -350,9 +339,9 @@ body {
         <span class="aff-value" id="val-rongzhao">0</span>
       </div>
       <div class="aff-item">
-        <span class="aff-name">墨渊</span>
-        <div class="aff-bar"><div class="aff-fill sumoyuan" id="aff-sumoyuan"></div></div>
-        <span class="aff-value" id="val-sumoyuan">0</span>
+        <span class="aff-name">长离</span>
+        <div class="aff-bar"><div class="aff-fill muchangli" id="aff-muchangli"></div></div>
+        <span class="aff-value" id="val-muchangli">0</span>
       </div>
     </div>
   </div>
@@ -360,7 +349,6 @@ body {
   <div id="choices"></div>
 </div>
 
-<!-- 结局界面 -->
 <div id="ending-screen">
   <h2 id="ending-title"></h2>
   <div class="ending-text" id="ending-text"></div>
@@ -370,14 +358,15 @@ body {
 <script>
 // ==================== 游戏状态 ====================
 let state = {
-  affection: { xieyunzhou: 0, xiejiuyuan: 0, rongzhao: 0, sumoyuan: 0 },
+  affection: { shenhuaizhou: 0, lihanyuan: 0, rongzhao: 0, muchangli: 0 },
   flags: {},
-  chapter: 1
+  chapter: 1,
+  playerName: ''
 };
 
 // ==================== 好感度显示 ====================
 function updateAffectionUI() {
-  const names = ['xieyunzhou', 'xiejiuyuan', 'rongzhao', 'sumoyuan'];
+  const names = ['shenhuaizhou', 'lihanyuan', 'rongzhao', 'muchangli'];
   names.forEach(n => {
     const val = state.affection[n];
     document.getElementById('aff-' + n).style.width = Math.min(val, 100) + '%';
@@ -386,11 +375,13 @@ function updateAffectionUI() {
 }
 
 function changeAffection(name, amount) {
+  const before = state.affection[name];
   state.affection[name] = Math.max(0, Math.min(100, state.affection[name] + amount));
+  const actual = state.affection[name] - before;
   updateAffectionUI();
-  if (amount > 0) {
-    const labels = { xieyunzhou: '谢云舟', xiejiuyuan: '谢九渊', rongzhao: '容昭', sumoyuan: '苏墨渊' };
-    showAffPopup(labels[name] + ' 好感 +' + amount);
+  if (actual > 0) {
+    const labels = { shenhuaizhou: '沈怀舟', lihanyuan: '厉寒渊', rongzhao: '容昭', muchangli: '慕长离' };
+    showAffPopup(labels[name] + ' 好感 +' + actual);
   }
 }
 
@@ -417,39 +408,29 @@ function addText(html, className = '') {
   area.scrollTop = area.scrollHeight;
 }
 
-function addNarration(text) {
-  addText(text, 'narration');
-}
-
+function addNarration(text) { addText(text, 'narration'); }
 function addDialogue(speaker, text, charClass = '') {
   addText(`<span class="speaker">${speaker}</span>「${text}」`, 'dialogue ' + charClass);
 }
+function addThought(text) { addText('（' + text + '）', 'thought'); }
 
-function addThought(text) {
-  addText('（' + text + '）', 'thought');
-}
-
-// ==================== 选项渲染 ====================
 function showChoices(choices) {
   const container = document.getElementById('choices');
   container.innerHTML = '';
-  choices.forEach((c, i) => {
+  choices.forEach((c) => {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
     btn.textContent = c.text;
     btn.onclick = () => {
       container.innerHTML = '';
-      // 显示选择结果
       if (c.result) addNarration('▸ ' + c.result);
       if (c.effect) c.effect();
-      // 延迟后进入下一场景
       setTimeout(() => { c.next(); }, c.delay || 800);
     };
     container.appendChild(btn);
   });
 }
 
-// ==================== 背景切换 ====================
 function setChapterBg(ch) {
   const bg = document.getElementById('bg-layer');
   bg.className = '';
@@ -458,7 +439,6 @@ function setChapterBg(ch) {
     ['', '第一章 · 初入昆仑', '第二章 · 宗门禁忌', '第三章 · 入世历练', '第四章 · 秘境迷渊', '第五章 · 三界动荡'][ch] || '';
 }
 
-// ==================== 创建星光 ====================
 function createStars() {
   for (let i = 0; i < 40; i++) {
     const star = document.createElement('div');
@@ -471,9 +451,7 @@ function createStars() {
   }
 }
 
-// ==================== 场景流程 ====================
-
-// ---------- 序章 ----------
+// ==================== 序章 ====================
 function scene_prologue() {
   clearText();
   setChapterBg(1);
@@ -503,7 +481,7 @@ function scene_prologue() {
   container.appendChild(btn);
 }
 
-// ---------- 第一章：初入昆仑 ----------
+// ==================== 第一章 ====================
 function scene_chapter1_intro() {
   clearText();
   setChapterBg(1);
@@ -520,64 +498,89 @@ function scene_chapter1_intro() {
   setTimeout(() => {
     addNarration('');
     addNarration('桃花深处，一把月白色的伞，撑开了。');
-    addDialogue('???', '你是新来的师妹？', 'xieyunzhou');
+    addDialogue('???', '你是新来的师妹？', 'shenhuaizhou');
     addNarration('你抬头，看到一个穿着月白道袍的年轻男子。眉眼温和，笑起来像三月春风。');
-    addDialogue('谢云舟', '我是东峰大弟子，谢云舟。你迷路了？', 'xieyunzhou');
+    addDialogue('沈怀舟', '我是东峰大弟子，沈怀舟。你迷路了？', 'shenhuaizhou');
     
     showChoices([
       {
         text: '「对不起，我迷路了……给你添麻烦了。」',
         result: '他愣了一下。三百年来，第一个对他说「对不起」的人。',
-        effect: () => changeAffection('xieyunzhou', 5),
-        next: scene_c1_choice2
+        effect: () => changeAffection('shenhuaizhou', 15),
+        next: scene_c1_bridge
       },
       {
         text: '「你是大师兄？那以后请多指教！」',
         result: '他笑了笑，桃花眼弯弯的。',
-        effect: () => changeAffection('xieyunzhou', 3),
-        next: scene_c1_choice2
+        effect: () => changeAffection('shenhuaizhou', 10),
+        next: scene_c1_bridge
       },
       {
         text: '「我自己能找到路，不用麻烦你。」',
         result: '他收起伞，看了你很久。',
-        effect: () => changeAffection('xieyunzhou', 2),
-        next: scene_c1_choice2
+        effect: () => changeAffection('shenhuaizhou', 6),
+        next: scene_c1_bridge
       }
     ]);
   }, 1500);
 }
 
-function scene_c1_choice2() {
+function scene_c1_bridge() {
   addNarration('');
   addNarration('他没有再多说什么，只是蹲下身，背对着你。');
-  addDialogue('谢云舟', '上来吧。东峰的路不好走，天黑之前到不了。', 'xieyunzhou');
+  addDialogue('沈怀舟', '上来吧。东峰的路不好走，天黑之前到不了。', 'shenhuaizhou');
   addNarration('你趴在他背上。他的背很暖，走得很慢。');
   addNarration('你困了。迷迷糊糊之间，你感觉他绕了很远的路。');
   addNarration('');
   addNarration('到了住处，他把你放下，替你盖好被子。');
-  addDialogue('谢云舟', '明天带你去见师尊。早点睡。', 'xieyunzhou');
+  addDialogue('沈怀舟', '明天带你去见师尊。早点睡。', 'shenhuaizhou');
   addNarration('他转身离开。走到门口，又停下。');
-  addDialogue('谢云舟', '……你叫什么名字？', 'xieyunzhou');
+  addDialogue('沈怀舟', '……你叫什么名字？', 'shenhuaizhou');
   addNarration(`你报了名字。他点了点头，推门走了。`);
   addNarration('');
   addNarration('你不知道的是——他走到拐角处，靠着墙站了很久。');
   addNarration('他摸着自己的耳朵。是烫的。');
   
-  setTimeout(() => scene_c1_rongzhao(), 2000);
+  setTimeout(() => {
+    addNarration('');
+    addNarration('第二天清晨，沈怀舟来找你。');
+    addDialogue('沈怀舟', '今天带你去见师尊。路上……我教你几个基本的吐纳法门。', 'shenhuaizhou');
+    addNarration('他站在桃树下，朝你伸出手。');
+    showChoices([
+      {
+        text: '「好，谢谢大师兄。」（握住他的手）',
+        result: '他掌心很暖，握得很紧。一路上他教得很慢，每一个呼吸都亲自示范。',
+        effect: () => changeAffection('shenhuaizhou', 12),
+        next: scene_c1_rongzhao
+      },
+      {
+        text: '「我自己走就行。」（没有握手）',
+        result: '他收回手，笑了笑，没有勉强。但他走在你身侧，始终比你慢半步。',
+        effect: () => changeAffection('shenhuaizhou', 5),
+        next: scene_c1_rongzhao
+      },
+      {
+        text: '「大师兄，你每天都起这么早吗？」',
+        result: '他愣了一下。「嗯。习惯了。东峰人少，总得有人守着。」',
+        effect: () => changeAffection('shenhuaizhou', 8),
+        next: scene_c1_rongzhao
+      }
+    ]);
+  }, 2000);
 }
 
 function scene_c1_rongzhao() {
   clearText();
-  addNarration('第二天清晨，谢云舟带你去了东峰之巅。');
+  addNarration('你跟着沈怀舟上了东峰之巅。');
   addNarration('一座清冷的殿宇立在峰顶，殿门半掩，里面传来翻书的声音。');
   addNarration('你推门进去。');
   addNarration('');
   addNarration('殿内，一个白色长发的男人坐在案前。他的眼睛是冰蓝色的，像结了冰的湖。');
   addNarration('他没有抬头。');
-  addDialogue('谢云舟', '师尊，这是新入门的师妹。', 'xieyunzhou');
+  addDialogue('沈怀舟', '师尊，这是新入门的师妹。', 'shenhuaizhou');
   addNarration('他翻了一页书。');
   addDialogue('容昭', '嗯。', 'rongzhao');
-  addNarration('谢云舟退下了。殿内只剩你和他。');
+  addNarration('沈怀舟退下了。殿内只剩你和他。');
   addNarration('他终于抬头，看了你一眼。');
   addDialogue('容昭', '伸出手。', 'rongzhao');
   addNarration('你伸出测灵石。他指尖点在测灵石上，灵力探入。');
@@ -593,37 +596,73 @@ function scene_c1_rongzhao() {
     {
       text: '「师尊，我……还能留在东峰吗？」',
       result: '他翻书的手停了一瞬。三千年来，所有人都在问他「能不能变强」，只有你问「能不能留下」。',
-      effect: () => changeAffection('rongzhao', 8),
-      next: scene_c1_end
+      effect: () => changeAffection('rongzhao', 25),
+      next: scene_c1_rongzhao_deeper
     },
     {
       text: '「师尊，我会努力的，不会给您丢脸。」',
       result: '他没有抬头，只是翻了一页书。但你注意到，他翻的那一页，和上一页是同一页。',
-      effect: () => changeAffection('rongzhao', 4),
-      next: scene_c1_end
+      effect: () => changeAffection('rongzhao', 18),
+      next: scene_c1_rongzhao_deeper
     },
     {
       text: '（默默退出去，不打扰他）',
       result: '你走到门口时，身后传来他的声音：「明天来我书房。」',
-      effect: () => changeAffection('rongzhao', 6),
-      next: scene_c1_end
+      effect: () => changeAffection('rongzhao', 20),
+      next: scene_c1_rongzhao_deeper
     }
   ]);
+}
+
+function scene_c1_rongzhao_deeper() {
+  addNarration('');
+  addNarration('你正要离开，他忽然又开口了。');
+  addDialogue('容昭', '……你叫什么名字。', 'rongzhao');
+  addNarration('你报了名字。他重复了一遍，声音很低。');
+  addDialogue('容昭', '东峰人少。有什么不懂的，来问我。', 'rongzhao');
+  addNarration('这是他说过最长的一句话。');
+  
+  setTimeout(() => {
+    addNarration('');
+    addNarration('第二天清晨，你发现窗台上多了一本手抄剑谱。字迹是新的，墨还没干透。');
+    addNarration('你翻开第一页，上面写着——');
+    addNarration('「基础剑法·东峰入门。练熟之后再练第二页。」');
+    addNarration('字迹清隽，和藏经阁残页上的一模一样。');
+    
+    showChoices([
+      {
+        text: '去书房找师尊道谢。',
+        result: '你敲门进去，他正在看书。你说谢谢，他头也没抬，只说了句「嗯」。但你离开时，发现他嘴角微微动了一下。',
+        effect: () => changeAffection('rongzhao', 15),
+        next: scene_c1_end
+      },
+      {
+        text: '先练熟再说。',
+        result: '你练了一整天。傍晚时，你发现窗台上又多了一瓶伤药。没有署名，但瓶底刻着一个「容」字。',
+        effect: () => changeAffection('rongzhao', 12),
+        next: scene_c1_end
+      },
+      {
+        text: '去问大师兄，这是不是师尊给的。',
+        result: '沈怀舟看了一眼剑谱，沉默了一会儿，笑了。「是师尊的字。他很多年没写过剑谱了。」',
+        effect: () => { changeAffection('shenhuaizhou', 10); changeAffection('rongzhao', 6); },
+        next: scene_c1_end
+      }
+    ]);
+  }, 2000);
 }
 
 function scene_c1_end() {
   addNarration('');
   addNarration('就这样，你成了东峰的第四名弟子。');
-  addNarration('东峰只有四个人——你、大师兄谢云舟、师尊容昭，还有一个常年在魔渊洞闭关的「二师姐」。');
-  addNarration('');
-  addNarration('第二天清晨，你发现窗台上多了一本手抄剑谱。字迹是新的，墨还没干透。');
+  addNarration('东峰只有四个人——你、大师兄沈怀舟、师尊容昭，还有一个常年在魔渊洞闭关的「二师姐」。');
   addNarration('');
   addNarration('——第一章 完——');
   
   setTimeout(() => scene_chapter2_start(), 2500);
 }
 
-// ---------- 第二章：宗门禁忌 ----------
+// ==================== 第二章 ====================
 function scene_chapter2_start() {
   clearText();
   setChapterBg(2);
@@ -645,20 +684,20 @@ function scene_chapter2_start() {
     {
       text: '去藏经阁查资料，弄清楚三百年前发生了什么。',
       result: '你花了好几个晚上，终于在一本旧册的夹层里，找到了一页残篇。',
-      effect: () => { changeAffection('xiejiuyuan', 5); state.flags.foundRecord = true; },
+      effect: () => { changeAffection('lihanyuan', 15); state.flags.foundRecord = true; },
       next: scene_c2_records
     },
     {
-      text: '问大师兄谢云舟。',
-      result: '谢云舟沉默了很久，说：「别查了。有些事，不知道更好。」',
-      effect: () => changeAffection('xieyunzhou', 3),
+      text: '问大师兄沈怀舟。',
+      result: '沈怀舟沉默了很久，说：「别查了。有些事，不知道更好。」',
+      effect: () => changeAffection('shenhuaizhou', 15),
       next: scene_c2_ask_yunzhou
     },
     {
-      text: '不打听。专心练自己的剑。',
-      result: '你继续练剑。但那个名字，像一根刺，扎在你心里。',
-      effect: () => {},
-      next: scene_c2_practice
+      text: '问师尊容昭。',
+      result: '你敲了书房的门。他听完你的问题，翻书的手停了。很久，他说：「……你练你的剑。」',
+      effect: () => changeAffection('rongzhao', 18),
+      next: scene_c2_ask_rongzhao
     }
   ]);
 }
@@ -680,7 +719,7 @@ function scene_c2_records() {
     addNarration('梦里一片血红。一个男人的身影站在血雾中，背对着你。');
     addNarration('他慢慢转身——血色瞳仁，魔气滔天。');
     addNarration('你看不清他的脸。但你听到他说了一句话——');
-    addDialogue('???', '……三百年了。', 'xiejiuyuan');
+    addDialogue('???', '……三百年了。', 'lihanyuan');
     addNarration('');
     addNarration('你惊醒。窗外，月正中天。');
     setTimeout(() => scene_c2_practice(), 2000);
@@ -689,16 +728,66 @@ function scene_c2_records() {
 
 function scene_c2_ask_yunzhou() {
   addNarration('');
-  addNarration('谢云舟正在桃树下泡茶。听到你的问题，他的手顿了一下。');
-  addDialogue('谢云舟', '你听谁说的？', 'xieyunzhou');
+  addNarration('沈怀舟正在桃树下泡茶。听到你的问题，他的手顿了一下。');
+  addDialogue('沈怀舟', '你听谁说的？', 'shenhuaizhou');
   addNarration('他的语气很平静，但端着茶杯的手指微微泛白。');
-  addDialogue('谢云舟', '那个人……是我师兄。三百年前，我是东峰最小的弟子。', 'xieyunzhou');
-  addDialogue('谢云舟', '他教过我握剑。他被带走那天，东峰下了很大的雪。', 'xieyunzhou');
+  addDialogue('沈怀舟', '那个人……是我师兄。三百年前，我是东峰最小的弟子。', 'shenhuaizhou');
+  addDialogue('沈怀舟', '他教过我握剑。他被带走那天，东峰下了很大的雪。', 'shenhuaizhou');
   addNarration('他抬头看你，笑容温和：');
-  addDialogue('谢云舟', '师妹，有些事，不知道更好。你只要在东峰好好待着就行。', 'xieyunzhou');
-  addThought('他……不想让我知道。');
+  addDialogue('沈怀舟', '师妹，有些事，不知道更好。你只要在东峰好好待着就行。', 'shenhuaizhou');
+  addNarration('你注意到，他的茶杯已经凉了。但他一口没喝，只是攥着。');
   
-  setTimeout(() => scene_c2_practice(), 2500);
+  showChoices([
+    {
+      text: '「大师兄，你手冷。我给你换杯热的。」',
+      result: '他愣住了。低头看着自己手里的凉茶，很久没说话。然后他笑了，把茶倒了，重新泡了一杯。这次，他喝了。',
+      effect: () => changeAffection('shenhuaizhou', 22),
+      next: scene_c2_practice
+    },
+    {
+      text: '「那他……是好人吗？」',
+      result: '他沉默了很久。「他教我握剑的时候，手很稳。他教我认字的时候，很有耐心。」他抬头看你，「你说呢。」',
+      effect: () => { changeAffection('shenhuaizhou', 18); changeAffection('lihanyuan', 10); },
+      next: scene_c2_practice
+    },
+    {
+      text: '「我知道了。谢谢大师兄。」',
+      result: '他点了点头，笑容温和。但你转身离开时，听到身后一声很轻的叹息。',
+      effect: () => changeAffection('shenhuaizhou', 10),
+      next: scene_c2_practice
+    }
+  ]);
+}
+
+function scene_c2_ask_rongzhao() {
+  addNarration('');
+  addNarration('你站在书房里，等着他的回答。');
+  addNarration('他翻完了一页书，又翻了一页。很久，他才开口。');
+  addDialogue('容昭', '他是我师弟。', 'rongzhao');
+  addNarration('声音很平，但你看到他的指尖微微发白。');
+  addDialogue('容昭', '三百年前的事，与你无关。你练你的剑。', 'rongzhao');
+  addNarration('他低下头，不再看你。但你注意到，那本书，他翻到的那一页，始终没有翻过去。');
+  
+  showChoices([
+    {
+      text: '「师尊，你……难过吗？」',
+      result: '他翻书的手停了一瞬。冰蓝的眼睛抬起来看你。很久，他说：「……出去。」但你说不清，他是生气，还是别的什么。',
+      effect: () => changeAffection('rongzhao', 25),
+      next: scene_c2_practice
+    },
+    {
+      text: '「那我以后不问了。」',
+      result: '他点了点头，翻了一页书。但你走到门口时，听到他轻声说了一句：「……不是你的错。」',
+      effect: () => changeAffection('rongzhao', 18),
+      next: scene_c2_practice
+    },
+    {
+      text: '（什么都不说，退出去）',
+      result: '你退了出去。门关上的那一刻，你听到里面传来一声极轻的响动——像是书掉在了地上。',
+      effect: () => changeAffection('rongzhao', 15),
+      next: scene_c2_practice
+    }
+  ]);
 }
 
 function scene_c2_practice() {
@@ -715,26 +804,26 @@ function scene_c2_practice() {
   addNarration('轰——');
   addNarration('');
   addNarration('一股冰凉的气息顺着你的指尖窜入体内。你听到一个声音——');
-  addDialogue('???', '剑尖再低三寸。手腕放松。你太紧了。', 'xiejiuyuan');
+  addDialogue('???', '剑尖再低三寸。手腕放松。你太紧了。', 'lihanyuan');
   addNarration('你吓得剑都掉了。四处张望，空无一人。');
   
   showChoices([
     {
       text: '「你是谁？出来！」',
       result: '那个声音沉默了一会儿，笑了。三百年来，第一次有人对着空气质问他。',
-      effect: () => changeAffection('xiejiuyuan', 8),
+      effect: () => changeAffection('lihanyuan', 20),
       next: scene_c2_voice
     },
     {
       text: '（捡起剑，继续练）',
       result: '你捡起剑，按他说的调整了姿势。剑势顺畅了许多。那个声音没有再出现，但你能感觉到——有人在看着你。',
-      effect: () => changeAffection('xiejiuyuan', 5),
+      effect: () => changeAffection('lihanyuan', 16),
       next: scene_c2_voice
     },
     {
       text: '（转身就跑）',
       result: '你跑了。但跑出练剑台的那一刻，你听到身后传来一声叹息。很轻，像三百年的孤独。',
-      effect: () => changeAffection('xiejiuyuan', 2),
+      effect: () => changeAffection('lihanyuan', 10),
       next: scene_c2_voice
     }
   ]);
@@ -747,20 +836,53 @@ function scene_c2_voice() {
   addNarration('“手腕太紧。”“脚步太慢。”“剑不是砍的，是刺的。”');
   addNarration('你慢慢习惯了。甚至开始期待每天的这个时辰。');
   addNarration('');
-  addNarration('有一天，你对着空气说了一句——');
+  addNarration('有一天，你练完剑，对着空气说了一句——');
   addDialogue(state.playerName, '谢谢。', '');
   addNarration('');
   addNarration('那个声音沉默了。');
   addNarration('很久很久。');
-  addDialogue('???', '……不用谢。', 'xiejiuyuan');
+  addDialogue('???', '……不用谢。', 'lihanyuan');
   addNarration('声音很轻，像风穿过桃花。');
+  addNarration('');
+  addNarration('你犹豫了一下，又问——');
+  
+  showChoices([
+    {
+      text: '「师兄，你叫什么名字？」',
+      result: '沉默。更久的沉默。然后他说：「……厉寒渊。」声音很轻，像是怕吓到你。',
+      effect: () => changeAffection('lihanyuan', 22),
+      next: scene_c2_end
+    },
+    {
+      text: '「你明天还会来吗？」',
+      result: '他笑了一声。很短，但确实是笑了。「……你来了，我就在。」',
+      effect: () => changeAffection('lihanyuan', 20),
+      next: scene_c2_end
+    },
+    {
+      text: '「你……是不是东峰的人？」',
+      result: '沉默了很久。然后他说：「……以前是。」声音里带着三百年的重量。',
+      effect: () => changeAffection('lihanyuan', 18),
+      next: scene_c2_end
+    }
+  ]);
+}
+
+function scene_c2_end() {
+  addNarration('');
+  addNarration('你回到住处时，发现窗台上多了一碟点心。还是热的。');
+  addNarration('你拿起来，发现碟子底下压了一张纸条——');
+  addNarration('');
+  addNarration('「练剑辛苦。早点睡。」');
+  addNarration('');
+  addNarration('没有署名。但字迹很新，墨还没干透。');
   addNarration('');
   addNarration('——第二章 完——');
   
   setTimeout(() => scene_chapter3_start(), 2500);
 }
 
-// ---------- 第三章：入世历练 ----------
+// ==================== 第三章 ====================
 function scene_chapter3_start() {
   clearText();
   setChapterBg(3);
@@ -773,26 +895,26 @@ function scene_chapter3_start() {
   addNarration('摊主靠在树上，银白长发，月白广袖，闭着眼，像是在打盹。');
   addNarration('你蹲下来，拿起一块石头看了半天。');
   addNarration('石头很圆，灰扑扑的，没有任何灵气波动。但你喜欢。');
-  addDialogue('摊主', '那块是废石。', 'sumoyuan');
+  addDialogue('摊主', '那块是废石。', 'muchangli');
   addNarration('他没有睁眼，声音懒洋洋的。');
   
   showChoices([
     {
       text: '「可它很圆，放在水里应该好看。」',
       result: '他睁开了眼。异色瞳一闪而逝——左眼鎏金，右眼紫罗兰。他看了你很久，久到你有些发毛。',
-      effect: () => changeAffection('sumoyuan', 10),
+      effect: () => changeAffection('muchangli', 28),
       next: scene_c3_buy
     },
     {
       text: '「多少钱？我买了。」',
       result: '他终于睁眼，看了看你手里的石头，又看了看你。他笑了：「你确定？这石头拿去铺路都嫌丑。」',
-      effect: () => changeAffection('sumoyuan', 5),
+      effect: () => changeAffection('muchangli', 20),
       next: scene_c3_buy
     },
     {
       text: '「废石？那算了。」（放下石头）',
       result: '你放下石头，站起来要走。身后传来他的声音：「等等。」',
-      effect: () => changeAffection('sumoyuan', 3),
+      effect: () => changeAffection('muchangli', 15),
       next: scene_c3_buy
     }
   ]);
@@ -804,23 +926,75 @@ function scene_c3_buy() {
   addDialogue(state.playerName, '这些……够吗？');
   addNarration('他低头看着你手心的铜板，看了很久。');
   addNarration('然后他伸手，拿走了其中一枚。');
-  addDialogue('苏墨渊', '够了。一枚就行。', 'sumoyuan');
+  addDialogue('慕长离', '够了。一枚就行。', 'muchangli');
   addNarration('他把石头递给你，指尖擦过你的掌心。他的手指很凉。');
-  addDialogue('苏墨渊', '我叫苏墨渊。做点小生意。', 'sumoyuan');
+  addDialogue('慕长离', '我叫慕长离。做点小生意。', 'muchangli');
   addNarration('你报了名字。他重复了一遍，像是在品味什么。');
-  addDialogue('苏墨渊', `……${state.playerName}。好名字。`, 'sumoyuan');
+  addDialogue('慕长离', `……${state.playerName}。好名字。`, 'muchangli');
   addNarration('');
-  addNarration('你离开集市时，回头看了一眼。他还靠在树上，闭着眼，像什么都没发生过。');
-  addNarration('但你的掌心，还留着他指尖的凉意。');
+  addNarration('你正要走，他又开口了。');
+  addDialogue('慕长离', '喂。', 'muchangli');
+  addNarration('你回头。他靠在树上，异色瞳在阳光下闪了一下。');
+  addDialogue('慕长离', '明天还来吗？', 'muchangli');
   
-  setTimeout(() => scene_c3_yunzhou(), 2000);
+  showChoices([
+    {
+      text: '「来。」',
+      result: '他笑了。那笑容里有一种你看不懂的东西——像是三千年来第一次，有人答应了他什么。',
+      effect: () => changeAffection('muchangli', 28),
+      next: scene_c3_su_tea
+    },
+    {
+      text: '「不一定。看情况。」',
+      result: '他挑了挑眉，笑了。「行。那我等着。反正我时间多。」',
+      effect: () => changeAffection('muchangli', 18),
+      next: scene_c3_su_tea
+    },
+    {
+      text: '「你是谁？为什么问我？」',
+      result: '他歪了歪头，异色瞳金紫交织。「我是谁不重要。重要的是——你手里那块石头，整个集市只有我看得出它好看。你也看出来了。」',
+      effect: () => changeAffection('muchangli', 22),
+      next: scene_c3_su_tea
+    }
+  ]);
+}
+
+function scene_c3_su_tea() {
+  addNarration('');
+  addNarration('第二天，你还是去了集市。');
+  addNarration('他还在那棵树下，但摊子收了。取而代之的是一壶茶，两只杯子。');
+  addDialogue('慕长离', '坐。', 'muchangli');
+  addNarration('他给你倒了一杯茶。你喝了一口，很香，但你说不出是什么茶。');
+  addDialogue('慕长离', '三千年的雪顶寒梅。整个三界，只有我有。', 'muchangli');
+  addNarration('你差点呛到。他看着你笑，眼睛弯弯的，异色瞳在阳光下几乎透明。');
+  
+  showChoices([
+    {
+      text: '「你到底是什么人？」',
+      result: '他晃了晃手里的茶杯。「一个活了太久、有点无聊的人。你呢？你是什么人？」',
+      effect: () => changeAffection('muchangli', 20),
+      next: scene_c3_yunzhou
+    },
+    {
+      text: '「这茶……很贵吧？」',
+      result: '他笑了。「不贵。能有人陪我喝，就不贵。」',
+      effect: () => changeAffection('muchangli', 27),
+      next: scene_c3_yunzhou
+    },
+    {
+      text: '「谢谢你的茶。我得回去了。」',
+      result: '他点了点头，没有挽留。但你走到街角时，回头看了一眼——他还坐在那里，看着你离开的方向，很久。',
+      effect: () => changeAffection('muchangli', 15),
+      next: scene_c3_yunzhou
+    }
+  ]);
 }
 
 function scene_c3_yunzhou() {
   clearText();
   addNarration('回到东峰时，天色已晚。');
-  addNarration('谢云舟站在廊下，端着一杯茶。茶是凉的，他攥了一下午。');
-  addDialogue('谢云舟', '回来了？集市好玩吗？', 'xieyunzhou');
+  addNarration('沈怀舟站在廊下，端着一杯茶。茶是凉的，他攥了一下午。');
+  addDialogue('沈怀舟', '回来了？集市好玩吗？', 'shenhuaizhou');
   addNarration('他笑着问你，语气很随意。');
   addNarration('但你没注意到——他的目光扫过你的手腕，在你掌心停留了一瞬。');
   
@@ -828,19 +1002,19 @@ function scene_c3_yunzhou() {
     {
       text: '「好玩！我买了一块石头，特别圆。」',
       result: '他笑了，伸手替你拂去肩上落花。指尖在你耳侧停了极短的一瞬。',
-      effect: () => changeAffection('xieyunzhou', 3),
+      effect: () => changeAffection('shenhuaizhou', 12),
       next: scene_c3_night
     },
     {
-      text: '「遇到一个奇怪的摊主，叫苏墨渊。」',
-      result: '他端着茶杯的手指微微收紧。「……苏墨渊。」他念了一遍这个名字，笑容不变，「离他远点。」',
-      effect: () => { changeAffection('xieyunzhou', 5); state.flags.metSu = true; },
+      text: '「遇到一个奇怪的摊主，叫慕长离。」',
+      result: '他端着茶杯的手指微微收紧。「……慕长离。」他念了一遍这个名字，笑容不变，「离他远点。」',
+      effect: () => { changeAffection('shenhuaizhou', 18); state.flags.metSu = true; },
       next: scene_c3_night
     },
     {
       text: '「还行。大师兄，你等很久了吗？」',
       result: '他愣了一下，低头看了看手里的凉茶。然后他笑了，把那杯茶倒掉，重新泡了一杯。',
-      effect: () => changeAffection('xieyunzhou', 6),
+      effect: () => changeAffection('shenhuaizhou', 22),
       next: scene_c3_night
     }
   ]);
@@ -850,17 +1024,45 @@ function scene_c3_night() {
   addNarration('');
   addNarration('那天夜里，你又梦到了那个血瞳的男人。');
   addNarration('他站在一片桃花林中，背对着你。');
-  addDialogue('???', '你今天下山了。', 'xiejiuyuan');
+  addDialogue('???', '你今天下山了。', 'lihanyuan');
   addNarration('他的声音没有起伏。');
-  addDialogue('???', '那个人……离他远点。', 'xiejiuyuan');
-  addNarration('你想问他「为什么」，但梦醒了。');
+  addDialogue('???', '那个人……离他远点。', 'lihanyuan');
+  addNarration('你想问他「为什么」，但梦里的桃花忽然落了满地。他转过身，血瞳里映着你的脸。');
+  addDialogue('厉寒渊', '……你听到没有。', 'lihanyuan');
+  
+  showChoices([
+    {
+      text: '「你是在关心我吗？」',
+      result: '他愣住。血瞳里的冷意碎了一瞬。「……我只是不想你被骗。」',
+      effect: () => changeAffection('lihanyuan', 20),
+      next: scene_c3_end
+    },
+    {
+      text: '「你为什么会在我的梦里？」',
+      result: '他沉默了很久。「因为你每天在后山练剑。我在那道残痕里，留了一缕神识。」',
+      effect: () => changeAffection('lihanyuan', 18),
+      next: scene_c3_end
+    },
+    {
+      text: '「你管得太多了。」',
+      result: '他笑了。那笑容又冷又苦。「是啊。我管得太多了。三百年前，我也管得太多。」',
+      effect: () => changeAffection('lihanyuan', 10),
+      next: scene_c3_end
+    }
+  ]);
+}
+
+function scene_c3_end() {
+  addNarration('');
+  addNarration('梦醒了。你睁开眼，发现枕边多了一枝桃花。');
+  addNarration('花瓣上还沾着露水。这个时节，东峰的桃花早就谢了。');
   addNarration('');
   addNarration('——第三章 完——');
   
   setTimeout(() => scene_chapter4_start(), 2500);
 }
 
-// ---------- 第四章：秘境迷渊 ----------
+// ==================== 第四章 ====================
 function scene_chapter4_start() {
   clearText();
   setChapterBg(4);
@@ -884,29 +1086,29 @@ function scene_chapter4_start() {
   addNarration('他的目光从你脸上移开，落在你握剑的姿势上。');
   addNarration('然后，他停住了。');
   addNarration('');
-  addDialogue('谢九渊', '三百年了……还有昆仑弟子，敢这么干净地活着。', 'xiejiuyuan');
+  addDialogue('厉寒渊', '三百年了……还有昆仑弟子，敢这么干净地活着。', 'lihanyuan');
   addNarration('他的声音很低，像从深渊里传上来。');
   addNarration('他转身要走。走了几步，又停下。');
   addNarration('他没有回头。');
-  addDialogue('谢九渊', '……东峰的剑法，练歪了。手腕太紧。明天这个时辰，还来这里。我教你。', 'xiejiuyuan');
+  addDialogue('厉寒渊', '……东峰的剑法，练歪了。手腕太紧。明天这个时辰，还来这里。我教你。', 'lihanyuan');
   
   showChoices([
     {
       text: '「等一下！你是谁？」',
       result: '他侧过头，血瞳扫了你一眼。「你每天在后山跟空气说话，不知道我是谁？」',
-      effect: () => changeAffection('xiejiuyuan', 10),
+      effect: () => changeAffection('lihanyuan', 18),
       next: scene_c4_talk
     },
     {
       text: '「你……你的手在流血。」',
       result: '他愣住了。低头看了一眼右手——三百年前被逐出师门时留下的旧伤，早已结疤，但他一直没治。三百年来，所有人看到他的第一眼都是「血魔尊」，只有你，先看到「伤口」。',
-      effect: () => changeAffection('xiejiuyuan', 15),
+      effect: () => changeAffection('lihanyuan', 25),
       next: scene_c4_talk
     },
     {
       text: '（握紧剑，不说话）',
       result: '他看了你很久，然后笑了。那笑容里没有恶意，只有一种很深的疲惫。「……胆子倒是比剑法大。」',
-      effect: () => changeAffection('xiejiuyuan', 6),
+      effect: () => changeAffection('lihanyuan', 12),
       next: scene_c4_talk
     }
   ]);
@@ -918,9 +1120,9 @@ function scene_c4_talk() {
   addNarration('他已经在练剑台上等着了。');
   addNarration('他没有教你怎么出剑。他只是让你反复练一个最简单的动作——起手式。');
   addNarration('');
-  addDialogue('谢九渊', '你练了三个月，连起手式都没练对。', 'xiejiuyuan');
+  addDialogue('厉寒渊', '你练了三个月，连起手式都没练对。', 'lihanyuan');
   addDialogue(state.playerName, '……我资质差。');
-  addDialogue('谢九渊', '资质差才要练。资质好的人，懒得练这个。', 'xiejiuyuan');
+  addDialogue('厉寒渊', '资质差才要练。资质好的人，懒得练这个。', 'lihanyuan');
   addNarration('他的语气很冷淡，但纠正你手腕角度的时候，动作很轻。');
   addNarration('');
   addNarration('你注意到，他的右手手背上有一道很深的旧疤。');
@@ -930,19 +1132,19 @@ function scene_c4_talk() {
     {
       text: '「师兄，你的手……是怎么伤的？」',
       result: '他低头看着那道疤，沉默了很久。「被人冤枉的时候，自己划的。想证明……我没做过。」他抬头看你，血瞳里翻涌着三百年的东西，「后来发现，没人看。」',
-      effect: () => changeAffection('xiejiuyuan', 12),
+      effect: () => changeAffection('lihanyuan', 22),
       next: scene_c4_deeper
     },
     {
       text: '「师兄，你恨昆仑吗？」',
       result: '他笑了，那笑容很淡。「恨。」他顿了顿，看着你，「但你穿着昆仑的衣服。你穿着它的时候……我就下不了手了。」',
-      effect: () => changeAffection('xiejiuyuan', 10),
+      effect: () => changeAffection('lihanyuan', 20),
       next: scene_c4_deeper
     },
     {
-      text: '（什么都没问，继续练剑）',
-      result: '他看了你一眼，没有再说话。但你感觉到，他站在你身后，看了你很久。',
-      effect: () => changeAffection('xiejiuyuan', 5),
+      text: '「师兄，你教我剑法，我教你一件事好不好？」',
+      result: '他挑了挑眉。「什么？」你说：「下次手受伤了，要包扎。不要自己划。」他愣了很久，然后别过头，声音很轻：「……你管得真宽。」',
+      effect: () => changeAffection('lihanyuan', 25),
       next: scene_c4_deeper
     }
   ]);
@@ -958,19 +1160,51 @@ function scene_c4_deeper() {
   addNarration('有一天夜里，你练完剑，发现他靠在桃树上，闭着眼。');
   addNarration('月光照在他脸上，魔纹隐隐发光。他看起来很累。');
   addNarration('你走近了一步。他忽然开口，声音很轻——');
-  addDialogue('谢九渊', '别走。', 'xiejiuyuan');
+  addDialogue('厉寒渊', '别走。', 'lihanyuan');
   addNarration('他在说梦话。');
-  addDialogue('谢九渊', '……别丢下我。', 'xiejiuyuan');
+  addDialogue('厉寒渊', '……别丢下我。', 'lihanyuan');
   addNarration('像个孩子。');
   addNarration('');
   addNarration('你站在那里，很久没有动。');
+  
+  showChoices([
+    {
+      text: '（轻轻替他盖上外袍）',
+      result: '你刚把外袍搭在他身上，他就醒了。他低头看着那件外袍，看了很久。然后他抬头看你，血瞳里有什么在翻涌。「……你知不知道，三百年来，没人给我盖过衣服。」',
+      effect: () => changeAffection('lihanyuan', 22),
+      next: scene_c4_morning
+    },
+    {
+      text: '（坐在他身边，等他醒）',
+      result: '你坐在他身边，看了一整夜的桃花。他醒来时，发现你靠在他肩上睡着了。他没有动，保持那个姿势直到天亮。',
+      effect: () => changeAffection('lihanyuan', 20),
+      next: scene_c4_morning
+    },
+    {
+      text: '（悄悄离开）',
+      result: '你悄悄走了。但走出几步，身后传来他的声音：「……你走了。」很轻，像是习惯了。',
+      effect: () => changeAffection('lihanyuan', 10),
+      next: scene_c4_morning
+    }
+  ]);
+}
+
+function scene_c4_morning() {
+  addNarration('');
+  addNarration('天亮时，你回到住处。');
+  addNarration('推开门，发现桌上多了一封信。没有署名，但信封上的火漆是一朵桃花。');
+  addNarration('你拆开信，里面只有一行字——');
+  addNarration('');
+  addNarration('「昨晚的月亮很好。下次一起看。」');
+  addNarration('');
+  addNarration('你认出了那个字迹——和窗台上点心下的纸条，一模一样。');
   addNarration('');
   addNarration('——第四章 完——');
   
   setTimeout(() => scene_chapter5_start(), 2500);
 }
 
-// ---------- 第五章：三界动荡 ----------
+// ==================== 第五章 ====================
 function scene_chapter5_start() {
   clearText();
   setChapterBg(5);
@@ -989,17 +1223,17 @@ function scene_chapter5_start() {
   addNarration('就在这时，殿门被推开了。');
   addNarration('四个人，同时走了进来。');
   addNarration('');
-  addNarration('谢云舟——月白道袍，眉眼温和，站在你身侧。');
-  addNarration('谢九渊——玄衣血瞳，魔气翻涌，站在殿门口，没有进来。');
+  addNarration('沈怀舟——月白道袍，眉眼温和，站在你身侧。');
+  addNarration('厉寒渊——玄衣血瞳，魔气翻涌，站在殿门口，没有进来。');
   addNarration('容昭——白色长发，冰蓝眼睛，坐在主位上，没有看任何人。');
-  addNarration('苏墨渊——银发异瞳，懒洋洋地靠在柱子上，嘴角带笑。');
+  addNarration('慕长离——银发异瞳，懒洋洋地靠在柱子上，嘴角带笑。');
   addNarration('');
   addNarration('仙道四峰的峰主同时站了起来。');
-  addNarration('「谢九渊！你竟敢——」');
+  addNarration('「厉寒渊！你竟敢——」');
   addNarration('');
-  addDialogue('谢九渊', '我来接我的师妹。', 'xiejiuyuan');
-  addDialogue('苏墨渊', '我来接我的小摊友。', 'sumoyuan');
-  addDialogue('谢云舟', '……师妹，别怕。', 'xieyunzhou');
+  addDialogue('厉寒渊', '我来接我的师妹。', 'lihanyuan');
+  addDialogue('慕长离', '我来接我的小摊友。', 'muchangli');
+  addDialogue('沈怀舟', '……师妹，别怕。', 'shenhuaizhou');
   addNarration('容昭没有说话。他只是看了你一眼。');
   addNarration('冰蓝色的眼睛里，有什么东西在翻涌。');
   addNarration('');
@@ -1007,26 +1241,11 @@ function scene_chapter5_start() {
   addNarration('你深吸一口气——');
   
   showChoices([
-    {
-      text: '「我选谢云舟。」',
-      next: () => ending_check('xieyunzhou')
-    },
-    {
-      text: '「我选谢九渊。」',
-      next: () => ending_check('xiejiuyuan')
-    },
-    {
-      text: '「我选容昭。」',
-      next: () => ending_check('rongzhao')
-    },
-    {
-      text: '「我选苏墨渊。」',
-      next: () => ending_check('sumoyuan')
-    },
-    {
-      text: '「……我谁都不选。」',
-      next: () => ending_check('none')
-    }
+    { text: '「我选沈怀舟。」', next: () => ending_check('shenhuaizhou') },
+    { text: '「我选厉寒渊。」', next: () => ending_check('lihanyuan') },
+    { text: '「我选容昭。」', next: () => ending_check('rongzhao') },
+    { text: '「我选慕长离。」', next: () => ending_check('muchangli') },
+    { text: '「……我谁都不选。」', next: () => ending_check('none') }
   ]);
 }
 
@@ -1034,17 +1253,13 @@ function scene_chapter5_start() {
 function ending_check(choice) {
   clearText();
   
-  // 检查有多少人好感度 >= 61
   const highAff = Object.entries(state.affection).filter(([k, v]) => v >= 61);
   
-  // 如果选择的人好感度 >= 61，进入该角色结局
   if (choice !== 'none' && state.affection[choice] >= 61) {
-    const names = { xieyunzhou: '谢云舟', xiejiuyuan: '谢九渊', rongzhao: '容昭', sumoyuan: '苏墨渊' };
     showEnding(choice, state.affection[choice] >= 81 ? 'HE' : 'BE');
     return;
   }
   
-  // 如果选择的人好感度 < 61，但有人 >= 61
   if (highAff.length >= 2) {
     showEnding('harem', 'HE');
     return;
@@ -1055,7 +1270,6 @@ function ending_check(choice) {
     return;
   }
   
-  // 无人好感度 >= 61
   showEnding('alone', 'BE');
 }
 
@@ -1068,9 +1282,9 @@ function showEnding(type, grade) {
   let titleStr = '';
   let textStr = '';
   
-  if (type === 'xieyunzhou') {
+  if (type === 'shenhuaizhou') {
     if (grade === 'HE') {
-      titleStr = '谢云舟 · 桃之夭夭';
+      titleStr = '沈怀舟 · 桃之夭夭';
       textStr = `
         <p>东峰的桃树全被他亲手砍了。他用那些桃树干围了一座院子，只留一扇门。</p>
         <p>他每天给你送饭，每天给你梳头，每晚坐在你床边看你睡着才走。</p>
@@ -1087,26 +1301,23 @@ function showEnding(type, grade) {
         <p style="color:#f0d080;margin-top:20px;">—— 桃之夭夭，灼灼其华。之子于归，宜其室家。</p>
       `;
     } else {
-      titleStr = '谢云舟 · 桃夭空落';
+      titleStr = '沈怀舟 · 桃夭空落';
       textStr = `
         <p>东峰的桃树全被他砍了。他用那些桃树干围了一座院子，只留一扇门。</p>
         <p>他每天给你送饭，每天给你梳头，每晚坐在你床边看你睡着才走。</p>
-        <p>但他看你的眼神，始终隔着一层。你对他笑，他会回笑。你叫他“大师兄”，他会应。但你从来没有主动牵过他的手。</p>
+        <p>但他看你的眼神，始终隔着一层。</p>
         <p>有一天他问你：“你在这里……开心吗？”</p>
         <p>你沉默了很久，说：“大师兄，你开心吗？”</p>
         <p>他愣住。</p>
-        <p>那天夜里，他喝了很多酒。醉醺醺地走到你房前，手悬在门上很久，最终没有敲。他靠着门板坐在地上，额头抵着门，声音又低又哑：</p>
-        <p>“师妹……你能不能……看看我。”</p>
-        <p>门里没有声音。</p>
-        <p>他笑了，笑得很难看。然后他站起来，摇摇晃晃地走了。</p>
-        <p>第二天，他依然笑着给你送饭，像什么都没发生过。</p>
+        <p>那天夜里，他靠着门板坐在地上，额头抵着门，声音又低又哑：“师妹……你能不能……看看我。”</p>
+        <p>门里没有声音。他笑了，笑得很难看。</p>
         <p>院子里的桃树桩，始终没有发新芽。</p>
-        <p style="color:#f0d080;margin-top:20px;">—— 桃之夭夭，其叶蓁蓁。之子于归，宜其家人。但他等的人，心不在此。</p>
+        <p style="color:#f0d080;margin-top:20px;">—— 桃之夭夭，其叶蓁蓁。但他等的人，心不在此。</p>
       `;
     }
-  } else if (type === 'xiejiuyuan') {
+  } else if (type === 'lihanyuan') {
     if (grade === 'HE') {
-      titleStr = '谢九渊 · 九渊归月';
+      titleStr = '厉寒渊 · 九渊归月';
       textStr = `
         <p>魔宫最深处，有一座宫殿。宫殿是按照东峰的模样建的——桃花是假的，木头刷了粉色。</p>
         <p>她推开门的那一刻，他站在门边，像个等夸奖的孩子：“师兄就是你的家。”</p>
@@ -1124,7 +1335,7 @@ function showEnding(type, grade) {
         <p style="color:#f0d080;margin-top:20px;">—— 九渊归月，深渊独宠。三百年黑暗，唯你是光。</p>
       `;
     } else {
-      titleStr = '谢九渊 · 九渊独沉';
+      titleStr = '厉寒渊 · 九渊独沉';
       textStr = `
         <p>魔宫最深处，有一座宫殿。宫殿是按照东峰的模样建的——桃花是假的，木头刷了粉色。</p>
         <p>她住在魔宫里。他每天早晨在窗台放一杯茶。她不喝，他也不收。</p>
@@ -1138,7 +1349,6 @@ function showEnding(type, grade) {
         <p>她没有走。“你花了三百年建了一座牢笼。我也想看看，牢笼外面是什么。”</p>
         <p>他看着她，血瞳里有什么在翻涌。他伸出手，停在半空，最终还是收了回去。</p>
         <p>“……好。”</p>
-        <p>他转身走了。魔宫的假桃花，落了一地。</p>
         <p style="color:#f0d080;margin-top:20px;">—— 九渊独沉，月照空城。她留下来了，但心，他始终没能确定。</p>
       `;
     }
@@ -1181,16 +1391,16 @@ function showEnding(type, grade) {
         <p style="color:#f0d080;margin-top:20px;">—— 雪落无声，空寂满城。她走了，他留在冰里。</p>
       `;
     }
-  } else if (type === 'sumoyuan') {
+  } else if (type === 'muchangli') {
     if (grade === 'HE') {
-      titleStr = '苏墨渊 · 青丘长囚';
+      titleStr = '慕长离 · 青丘长囚';
       textStr = `
         <p>青丘。桃花永不凋零——整座青丘都是他的妖力所化。</p>
         <p>他每天给她画一幅画。三天后，墙上挂满了她的样子。</p>
         <p>有一天她发现一间密室。里面全是画——她蹲在摊前的样子，她买石头的认真表情，她在灯会上被挤到的狼狈模样。每一张画上都写着日期。</p>
         <p>他站在她身后，声音很轻：“你问我等了多久。我说三个月。其实从你蹲在我摊前那天开始，我就在画你了。画了三百六十四张。今天是第三百六十五张。”</p>
         <p>她转身，伸手拉住他一条尾巴。他闷哼一声，尾巴缠得更紧。</p>
-        <p>“苏墨渊——你尾巴缠太紧了。”</p>
+        <p>“慕长离——你尾巴缠太紧了。”</p>
         <p>“你忍一下。”他笑了，异色瞳在月光下金紫交织，“三千年的桃花，一夜开完……我也忍了很久了。”</p>
         <p>九条尾巴从四面八方缠上来，把她整个人裹住。他低头，嘴唇贴着她后颈的狐尾印记，声音又低又哑：</p>
         <p>“你最近都没来找我。是不是不喜欢我了。”</p>
@@ -1200,13 +1410,13 @@ function showEnding(type, grade) {
         <p style="color:#f0d080;margin-top:20px;">—— 青丘长囚，千年等待。三千年风月，只为你一人疯魔。</p>
       `;
     } else {
-      titleStr = '苏墨渊 · 青丘空候';
+      titleStr = '慕长离 · 青丘空候';
       textStr = `
         <p>青丘。桃花永不凋零——整座青丘都是他的妖力所化。</p>
         <p>他每天给她画一幅画。三天后，墙上挂满了她的样子。</p>
         <p>他带她逛青丘，走到哪桃花开到哪。但她始终没有笑。</p>
         <p>有一天他问她：“你不喜欢这里吗？”</p>
-        <p>她沉默很久，说：“苏墨渊，青丘很美。但美得像一场梦。”</p>
+        <p>她沉默很久，说：“慕长离，青丘很美。但美得像一场梦。”</p>
         <p>他愣住。</p>
         <p>她说：“梦总会醒的。”</p>
         <p>那一夜，青丘的桃花全落了。三千年来第一次。</p>
@@ -1225,7 +1435,7 @@ function showEnding(type, grade) {
     titleStr = '修罗场 · 四界倾心';
     textStr = `
       <p>四个人同时出现在东峰。你站在中间。</p>
-      <p>谢云舟笑着去砍桃树，说要围个更大的院子。谢九渊开始拆魔宫的墙，说要搬到东峰来。苏墨渊在桃林里种了九尾狐的幻术桃花。容昭看着被拆了一半的东峰，沉默很久，说了句“嗯”，然后开始修。</p>
+      <p>沈怀舟笑着去砍桃树，说要围个更大的院子。厉寒渊开始拆魔宫的墙，说要搬到东峰来。慕长离在桃林里种了九尾狐的幻术桃花。容昭看着被拆了一半的东峰，沉默很久，说了句“嗯”，然后开始修。</p>
       <p>东峰重建了三次。最后容昭放弃修了，说“随你们”。</p>
       <p>四个人站在东峰之巅，同时看着你。</p>
       <p>“东峰这么大，住不下四个人吗？”你笑了，“还是说——你们谁想睡地板？”</p>
@@ -1236,9 +1446,9 @@ function showEnding(type, grade) {
       <p>四人同时抬头。</p>
       <p>“我说的是——谁上来帮我捏肩。”</p>
       <p>四人同时迈步。容昭最快，他已经站在楼梯口了，冰蓝眼睛看着你，面无表情：“嗯。”</p>
-      <p>谢云舟笑了，桃花眼弯弯的：“师尊，你腿真快。”</p>
-      <p>谢九渊血瞳微眯：“师兄，你什么时候学会抢了。”</p>
-      <p>苏墨渊九条尾巴甩了甩：“我尾巴可以一起捏。”</p>
+      <p>沈怀舟笑了，桃花眼弯弯的：“师尊，你腿真快。”</p>
+      <p>厉寒渊血瞳微眯：“师兄，你什么时候学会抢了。”</p>
+      <p>慕长离九条尾巴甩了甩：“我尾巴可以一起捏。”</p>
       <p>你靠在栏杆上，看着四个人，笑了：“一起上来吧。我房间大。”</p>
       <p>四人同时愣住。</p>
       <p>然后东峰的小楼，灯亮了一整夜。</p>
@@ -1250,10 +1460,10 @@ function showEnding(type, grade) {
       <p>你谁都不选。</p>
       <p>你闭关百年，成化神修士。</p>
       <p>百年后，你出关。</p>
-      <p>东峰的桃树还在开。谢云舟坐在桃树下，一个人泡茶。茶杯是两只，但只有他一个人喝。</p>
-      <p>魔宫的假桃花还在。谢九渊站在窗前，窗台上放着两杯茶。茶凉了，没人喝。</p>
+      <p>东峰的桃树还在开。沈怀舟坐在桃树下，一个人泡茶。茶杯是两只，但只有他一个人喝。</p>
+      <p>魔宫的假桃花还在。厉寒渊站在窗前，窗台上放着两杯茶。茶凉了，没人喝。</p>
       <p>东峰后山的冰室还在。容昭坐在冰镜前，镜子里映着东峰的桃林。桃林里没有人。</p>
-      <p>青丘的桃花还在开。苏墨渊坐在密室里，墙上三千张画。他还在画，第三百零一张。画的是你闭关那天的背影。</p>
+      <p>青丘的桃花还在开。慕长离坐在密室里，墙上三千张画。他还在画，第三百零一张。画的是你闭关那天的背影。</p>
       <p>你站在东峰之巅，看着四个人。四个人同时抬头，看到了你。</p>
       <p>你笑了笑，转身，飞升而去。</p>
       <p>身后传来四声呼喊，被风吹散了。</p>
@@ -1285,7 +1495,7 @@ function startGame() {
 
 function restartGame() {
   state = {
-    affection: { xieyunzhou: 0, xiejiuyuan: 0, rongzhao: 0, sumoyuan: 0 },
+    affection: { shenhuaizhou: 0, lihanyuan: 0, rongzhao: 0, muchangli: 0 },
     flags: {},
     chapter: 1,
     playerName: ''
