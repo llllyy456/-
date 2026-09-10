@@ -1199,6 +1199,85 @@ function scene_c4_morning() {
   addNarration('');
   addNarration('你认出了那个字迹——和窗台上点心下的纸条，一模一样。');
   addNarration('');
+  addNarration('你正出神，门外传来脚步声。');
+  addNarration('——是师尊容昭。');
+  addNarration('他站在门口，白色长发上沾着夜露。他看着你，冰蓝眼睛里有什么在翻涌。');
+  addNarration('你忽然意识到——他一夜没睡。');
+  
+  setTimeout(() => scene_c4_rongzhao(), 2500);
+}
+
+function scene_c4_rongzhao() {
+  addNarration('');
+  addDialogue('容昭', '……回来就好。', 'rongzhao');
+  addNarration('声音很轻，像怕惊碎什么。');
+  addNarration('你从未见过他这样。三千年来，所有人都说他冷得像冰，可此刻你分明看到——冰下面，有什么在烧。');
+  addNarration('他转身要走，走到门口又停下。他没有回头。');
+  addDialogue('容昭', '秘境的事……以后，不要一个人去。', 'rongzhao');
+  addNarration('这是他说过最长的话之一。');
+  
+  showChoices([
+    {
+      text: '「师尊，我回来了。让您担心了。」',
+      result: '他沉默了很久，然后低头。「……嗯。」但你注意到，他攥着袖口的手指，不再发白。',
+      effect: () => changeAffection('rongzhao', 25),
+      next: scene_c4_rongzhao_deeper
+    },
+    {
+      text: '「师尊，我在秘境遇到了厉寒渊。他没有伤我。」',
+      result: '他翻书的手停了一瞬。很久，他说：「……我知道。」他抬头看你，冰蓝眼睛里有什么在碎，「他若伤你，我必屠魔宫。」',
+      effect: () => changeAffection('rongzhao', 22),
+      next: scene_c4_rongzhao_deeper
+    },
+    {
+      text: '（什么都不说，只是站在他身边）',
+      result: '他没有赶你走。你们就这样站着，看了一整夜的天。天亮时，他轻声说了一句：「……以后，别让我等。」',
+      effect: () => changeAffection('rongzhao', 20),
+      next: scene_c4_rongzhao_deeper
+    }
+  ]);
+}
+
+function scene_c4_rongzhao_deeper() {
+  addNarration('');
+  addNarration('他忽然起身，走到窗边。晨光落在他白色长发上，像落了一层雪。');
+  addNarration('他背对着你，声音很低——');
+  addDialogue('容昭', '三百年前，我送走他的时候……也是这样的天光。', 'rongzhao');
+  addNarration('你愣住。这是他第一次主动提起那件事。');
+  addDialogue('容昭', '我选择了沉默。我以为沉默是对的。后来才发现，有些话，不说就来不及了。', 'rongzhao');
+  addNarration('他转过身，冰蓝眼睛看着你。');
+  addDialogue('容昭', '……你让我想起这件事。', 'rongzhao');
+  
+  showChoices([
+    {
+      text: '「师尊，你想说什么，我听着。」',
+      result: '他看着你，很久。然后他走过来，伸手，极轻地碰了碰你的头发。指尖很凉，但你的心却烫了一下。他很快收回手，像是被烫到。「……去睡吧。」',
+      effect: () => changeAffection('rongzhao', 22),
+      next: scene_c4_end
+    },
+    {
+      text: '「师尊，不管发生什么，我都不会走。」',
+      result: '他愣住。冰蓝眼睛里有什么在化。他张了张嘴，最终什么都没说。但他送你到了门口，手在门框上停了很久。',
+      effect: () => changeAffection('rongzhao', 25),
+      next: scene_c4_end
+    },
+    {
+      text: '（走上前，握住他的手）',
+      result: '他的手很凉。你握住的那一刻，他整个人僵住了。他没有抽回手。很久，他低头看着你们交握的手，声音哑得不像他：「……你的手，很暖。」',
+      effect: () => changeAffection('rongzhao', 28),
+      next: scene_c4_end
+    }
+  ]);
+}
+
+function scene_c4_end() {
+  addNarration('');
+  addNarration('你回到住处，发现窗台上多了一支白梅。');
+  addNarration('花瓣上还沾着露水。这个时节，白梅早已谢了。');
+  addNarration('你低头，发现花枝下压着一张纸条，字迹清隽——');
+  addNarration('');
+  addNarration('「我在。」');
+  addNarration('');
   addNarration('——第四章 完——');
   
   setTimeout(() => scene_chapter5_start(), 2500);
