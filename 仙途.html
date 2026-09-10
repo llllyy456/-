@@ -2,11 +2,12 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>仙途</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; }
+button, input { touch-action: manipulation; }
 body {
   font-family: "Noto Serif SC", "Songti SC", "STSong", "Microsoft YaHei", serif;
   background: #050308;
@@ -93,9 +94,11 @@ body {
   max-width: 920px;
   margin: 0 auto;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   padding: 18px 20px;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom));
 }
 
 /* 状态栏 */
@@ -720,15 +723,246 @@ body {
   box-shadow: 0 0 6px rgba(144, 192, 224, 0.5);
 }
 
+/* ==================== 移动端适配 ==================== */
 @media (max-width: 600px) {
-  #game { padding: 10px; }
-  #text-area { padding: 24px 22px; font-size: 15px; }
-  .choice-btn { padding: 14px 20px 14px 24px; font-size: 14px; }
-  #status-bar { padding: 10px 16px; }
-  .aff-bar { width: 44px; }
-  #chapter-title { font-size: 13px; letter-spacing: 2px; }
-  #start-screen h1 { letter-spacing: 10px; }
-  #ending-screen .ending-text { padding: 20px; font-size: 15px; }
+  /* 主体 */
+  #game {
+    padding: 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+
+  /* 状态栏：纵向堆叠，避免横向拥挤 */
+  #status-bar {
+    padding: 9px 12px 10px;
+    gap: 8px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+  }
+  #status-bar::before, #status-bar::after { display: none; }
+  .cult-main {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+    padding: 0 2px;
+  }
+  .cult-main .realm-tag {
+    align-self: flex-start;
+    font-size: 12px;
+    padding: 4px 11px;
+    letter-spacing: 1px;
+  }
+  .cult-main .realm-tag .rank {
+    font-size: 10px;
+    padding-left: 7px;
+    margin-left: 3px;
+  }
+  .cult-main .lingli-bar-wrap { min-width: 0; width: 100%; gap: 8px; }
+  .cult-main .lingli-bar { height: 10px; }
+  .cult-main .lingli-text { font-size: 11px; letter-spacing: 0; }
+  .cult-main .attr-chips { gap: 5px; }
+  .cult-main .chip {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    letter-spacing: 0;
+  }
+  /* 「详」按钮移至状态栏右上角，保证 38px 触控高 */
+  #cult-btn {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    margin-left: 0;
+    min-width: 40px;
+    min-height: 36px;
+    padding: 4px 10px;
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  /* 好感度副栏：标题独占一行，四人均匀铺开 */
+  .cult-sub {
+    gap: 7px;
+    padding: 7px 2px 0;
+  }
+  #chapter-title {
+    width: 100%;
+    padding-left: 0;
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+  #affection-panel {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    padding-right: 0;
+  }
+  .aff-item { font-size: 10px; gap: 4px; justify-content: space-between; }
+  .aff-name { letter-spacing: 0; white-space: nowrap; }
+  .aff-bar { width: auto; flex: 1; min-width: 14px; height: 5px; }
+  .aff-value { min-width: 0; text-align: right; }
+
+  /* 文本区 */
+  #text-area {
+    padding: 18px 15px;
+    font-size: 15px;
+    line-height: 1.95;
+    margin-bottom: 10px;
+    border-radius: 10px;
+  }
+  #text-area::before, #text-area::after { width: 16px; height: 16px; }
+  .text-line { margin-bottom: 14px; }
+
+  /* 选项按钮：触控高度 ≥50px，间距舒展 */
+  #choices { gap: 10px; padding-bottom: 4px; }
+  .choice-btn {
+    min-height: 50px;
+    padding: 13px 16px;
+    font-size: 15px;
+    line-height: 1.55;
+    border-radius: 10px;
+    letter-spacing: 0.3px;
+  }
+  .choice-btn > div {
+    font-size: 11px !important;
+    margin-top: 3px !important;
+    line-height: 1.5 !important;
+  }
+
+  /* 捏人面板 */
+  .char-create { padding: 8px 0 4px; }
+  .cc-section { margin-bottom: 14px; }
+  .cc-section-title {
+    font-size: 14px;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .cc-grid { gap: 8px; }
+  .cc-pill {
+    min-height: 38px;
+    padding: 9px 14px;
+    font-size: 13px;
+    line-height: 1.3;
+    display: inline-flex;
+    align-items: center;
+  }
+  .cc-pill .cc-speed { margin-left: 3px; }
+  /* 体质标签：手机端整条竖排，说明文字不再挤在一行 */
+  .cc-constit-tag {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 9px 13px;
+    font-size: 13px;
+  }
+  .cc-constit-tag .cc-cn { font-size: 10px; line-height: 1.55; }
+  .cc-name-row input { min-height: 38px; font-size: 14px; }
+  .cc-reroll { min-height: 36px; padding: 8px 14px; }
+  .cc-start-btn {
+    min-height: 52px;
+    padding: 15px;
+    font-size: 16px;
+    letter-spacing: 6px;
+  }
+  .cc-tip { font-size: 10px; line-height: 1.6; }
+
+  /* 玉牌弹层：手机端改为底部抽屉，避开顶部状态栏 */
+  #cult-panel {
+    position: fixed;
+    top: auto;
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    width: auto;
+    max-height: 68vh;
+    padding: 14px 16px;
+    border-radius: 12px;
+  }
+  .cult-row { font-size: 12px; gap: 8px; margin-bottom: 7px; }
+  .cult-label { min-width: 62px; }
+
+  /* 好感 / 提示弹层 */
+  .aff-popup {
+    max-width: 82vw;
+    text-align: center;
+    font-size: 14px;
+    padding: 12px 22px;
+    letter-spacing: 1px;
+  }
+
+  /* 开始屏 */
+  #start-screen::before { inset: 16px; }
+  #start-screen::after { inset: 22px; }
+  #start-screen h1 { letter-spacing: 8px; margin-bottom: 12px; }
+  #start-screen .quote {
+    font-size: 13px;
+    letter-spacing: 1px;
+    line-height: 2;
+    margin-bottom: 38px;
+  }
+  .start-btn {
+    min-height: 52px;
+    padding: 15px 48px;
+    font-size: 17px;
+    letter-spacing: 6px;
+  }
+
+  /* 结局屏 */
+  #ending-screen { padding: 30px 16px calc(30px + env(safe-area-inset-bottom)); }
+  #ending-screen::before { inset: 14px; }
+  #ending-screen h2 { font-size: 28px; letter-spacing: 5px; margin-bottom: 24px; }
+  #ending-screen .ending-text {
+    padding: 18px 16px;
+    font-size: 14px;
+    line-height: 2.1;
+  }
+  .restart-btn {
+    min-height: 50px;
+    padding: 14px 40px;
+    font-size: 15px;
+    letter-spacing: 4px;
+  }
+}
+
+/* 窄屏手机（≤360px）：进一步收紧字号与留白 */
+@media (max-width: 360px) {
+  #game { padding: 8px; }
+  .cult-main .chip { font-size: 9px; padding: 2px 7px; }
+  .cult-main .realm-tag { font-size: 11px; }
+  .aff-item { font-size: 9px; gap: 3px; }
+  .aff-bar { min-width: 10px; }
+  #text-area { padding: 15px 12px; font-size: 14px; }
+  .choice-btn { min-height: 48px; padding: 12px 13px; font-size: 14px; }
+  .cc-pill { padding: 8px 12px; font-size: 12px; }
+  #start-screen h1 { letter-spacing: 6px; }
+  #start-screen .quote { font-size: 12px; }
+  .start-btn { padding: 14px 40px; }
+}
+
+/* 触摸屏：去掉 hover 位移动效（手机上会粘滞），改用按压反馈 */
+@media (hover: none) {
+  .choice-btn:hover {
+    transform: none;
+    background: linear-gradient(90deg, rgba(25, 20, 40, 0.85), rgba(18, 14, 30, 0.85));
+    border-color: rgba(180, 150, 100, 0.3);
+    color: #d8d0c0;
+    box-shadow: none;
+  }
+  .choice-btn:hover::before { opacity: 0; }
+  .choice-btn:hover::after { left: -100%; }
+  .choice-btn:active {
+    transform: scale(0.98);
+    background: linear-gradient(90deg, rgba(45, 35, 60, 0.95), rgba(30, 22, 45, 0.95));
+    border-color: rgba(240, 208, 128, 0.6);
+  }
+  .choice-btn:active::before { opacity: 1; }
+  .start-btn:hover, .restart-btn:hover { letter-spacing: inherit; }
+  .cc-start-btn:hover { transform: none; }
+  .start-btn:active, .restart-btn:active,
+  .cc-pill:active, .cc-reroll:active, .cc-start-btn:active, #cult-btn:active {
+    transform: scale(0.96);
+  }
 }
 
 /* ===== 开局捏人：药丸选择面板 ===== */
