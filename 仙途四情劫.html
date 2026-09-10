@@ -570,12 +570,14 @@ body {
   color: #f0e0c0;
 }
 
-/* 修仙面板 */
+/* 修仙面板（角色玉牌） */
 #cult-panel {
   position: absolute;
   top: 70px;
   right: 20px;
-  width: 260px;
+  width: 290px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
   padding: 18px 20px;
   background: linear-gradient(160deg, rgba(25, 18, 38, 0.96), rgba(15, 10, 25, 0.96));
   border: 1px solid rgba(200, 170, 110, 0.4);
@@ -591,12 +593,12 @@ body {
   align-items: center;
   gap: 10px;
   font-size: 13px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .cult-row:last-child { margin-bottom: 0; }
 .cult-label {
   color: #a09070;
-  min-width: 56px;
+  min-width: 70px;
   letter-spacing: 1px;
 }
 .cult-val {
@@ -676,11 +678,14 @@ body {
     <button id="cult-btn" onclick="toggleCultPanel()">道</button>
   </div>
   
-  <!-- 修仙面板（悬浮） -->
+  <!-- 修仙面板（角色玉牌） -->
   <div id="cult-panel" style="display:none;">
     <div class="cult-row"><span class="cult-label">灵根</span><span class="cult-val" id="cult-linggen">伪灵根</span></div>
     <div class="cult-row"><span class="cult-label">道向</span><span class="cult-val" id="cult-daopath">凡尘道</span></div>
     <div class="cult-row"><span class="cult-label">主修</span><span class="cult-val" id="cult-maincult">法修</span></div>
+    <div class="cult-row"><span class="cult-label">辅修</span><span class="cult-val" id="cult-subcult">采药</span></div>
+    <div class="cult-row"><span class="cult-label">出身</span><span class="cult-val" id="cult-origin">凡人国度</span></div>
+    <div class="cult-row"><span class="cult-label">弟子等级</span><span class="cult-val" id="cult-rank">杂役弟子</span></div>
     <div class="cult-row"><span class="cult-label">境界</span><span class="cult-val" id="cult-realm">练气一层</span></div>
     <div class="cult-row">
       <span class="cult-label">灵力</span>
@@ -688,7 +693,12 @@ body {
       <span class="cult-val" id="cult-lingli">0/100</span>
     </div>
     <div class="cult-row"><span class="cult-label">剑法</span><span class="cult-val" id="cult-sword">入门（0）</span></div>
+    <div class="cult-row"><span class="cult-label">骨龄</span><span class="cult-val" id="cult-boneage">14</span></div>
+    <div class="cult-row"><span class="cult-label">寿元</span><span class="cult-val" id="cult-lifespan">120 年</span></div>
     <div class="cult-row"><span class="cult-label">修为</span><span class="cult-val" id="cult-years">0 年</span></div>
+    <div class="cult-row"><span class="cult-label">本命法宝</span><span class="cult-val" id="cult-weapon">未得</span></div>
+    <div class="cult-row"><span class="cult-label">杀手锏</span><span class="cult-val" id="cult-killer">未觉</span></div>
+    <div class="cult-row"><span class="cult-label">弱点</span><span class="cult-val" id="cult-weakness">凡躯</span></div>
     <div class="cult-row"><span class="cult-label">自由行动</span><span class="cult-val" id="cult-free">1</span></div>
   </div>
   
@@ -710,13 +720,23 @@ let state = {
   chapter: 1,
   playerName: '',
   // 身份（开局选定）
-  linggen: '伪灵根',     // 灵根：天灵根/异灵根/双灵根/杂灵根/伪灵根
+  linggen: '伪灵根',     // 灵根：天灵根/真灵根/变异灵根/双灵根/杂灵根/伪灵根
   daoPath: '凡尘道',     // 修道方向：无情道/逍遥道/苍生道/多情道/杀戮道/凡尘道
-  mainCult: '法修',      // 主修方向：剑修/法修/丹修
+  mainCult: '法修',      // 主修方向：剑修/法修/丹修/体修/御兽
+  subCult: '采药',       // 辅修/生活职业：采药/炼器/制符/驯兽/铭文
+  origin: '凡人国度',    // 出身背景
+  // 身份卡：斗法设定
+  weapon: '未得',        // 本命法宝
+  killer: '未觉',        // 杀手锏
+  weakness: '凡躯',      // 弱点
   // 修仙属性
   cultivation: {
+    boneAge: 14,            // 真实骨龄
+    appearAge: 14,          // 外表年龄
+    lifespan: 120,          // 当前寿元（大限）
     realm: '练气一层',     // 境界
-    realmLevel: 1,          // 境界等级（1-12，对应练气1-9+筑基+金丹+元婴）
+    realmLevel: 1,          // 境界等级（1-17：练气1-9/筑基/金丹/元婴/渡劫/大乘/飞升）
+    discipleRank: '杂役弟子', // 宗门弟子等级
     lingli: 0,              // 灵力值
     lingliMax: 100,         // 当前境界灵力上限
     swordArt: 0,            // 剑法熟练度
@@ -727,30 +747,51 @@ let state = {
 };
 
 // ==================== 身份加成表 ====================
-// 灵根：灵力倍率 / 灵力上限倍率 / 初始剑法 / 起手灵力 / 文案备注
+// 灵根体系：天灵根/真灵根/变异灵根/双灵根/杂灵根/伪灵根
+// 灵根：灵力倍率 / 灵力上限倍率 / 初始剑法 / 起手灵力 / 寿元加成 / 文案
 const LINGGEN_BONUS = {
-  '天灵根': { lingliMul: 1.6, lingliMaxMul: 1.25, swordStart: 0, lingliStart: 30, note: '万中无一。吸纳天地灵气之速远胜常人，唯资质太显，易招祸端。' },
-  '异灵根': { lingliMul: 1.3, lingliMaxMul: 1.10, swordStart: 0, lingliStart: 10, note: '雷/冰/暗等变异之根。修速甚快，但灵气驳杂，与魔修易生共鸣。' },
-  '双灵根': { lingliMul: 1.1, lingliMaxMul: 1.05, swordStart: 0, lingliStart: 15, note: '两种灵根并存。中庸之姿，胜在平稳。' },
-  '杂灵根': { lingliMul: 0.85, lingliMaxMul: 0.95, swordStart: 0, lingliStart: 5, note: '五行皆有，无一精通。修速慢，但根基稳。' },
-  '伪灵根': { lingliMul: 0.65, lingliMaxMul: 0.90, swordStart: 5, lingliStart: 0, note: '仙道废材。修速极慢，然凡事认真者，或可另辟蹊径。' }
+  '天灵根':   { lingliMul: 1.7, lingliMaxMul: 1.30, swordStart: 0,  lingliStart: 35, life: 80,  note: '单一属性纯粹无杂。结丹前无瓶颈，绝世天才，各大宗门抢破头。然资质太显，易招祸端。' },
+  '真灵根':   { lingliMul: 1.3, lingliMaxMul: 1.10, swordStart: 0,  lingliStart: 18, life: 40,  note: '两到三种属性并存。修速中上，乃修仙界中坚力量，胜在稳固。' },
+  '变异灵根': { lingliMul: 1.55,lingliMaxMul: 1.20, swordStart: 0,  lingliStart: 25, life: 50,  note: '五行异变而生（冰/雷/风）。单一变异者修速冠绝三界，战力远超同阶，然灵气驳杂，与魔修易生共鸣。' },
+  '双灵根':   { lingliMul: 1.05,lingliMaxMul: 1.00, swordStart: 0,  lingliStart: 12, life: 10,  note: '两种灵根并存。中庸之姿，胜在平稳，少有瓶颈。' },
+  '杂灵根':   { lingliMul: 0.80,lingliMaxMul: 0.92, swordStart: 0,  lingliStart: 5,  life: 0,   note: '四到五种属性俱全，无一精通。修速龟爬，多为底层杂役。然根基反稳，少有走火入魔之虞。' },
+  '伪灵根':   { lingliMul: 0.60,lingliMaxMul: 0.88, swordStart: 5,  lingliStart: 0,  life: -10, note: '仙道废材。修速极慢，几无结丹可能，然凡事认真者，或可另辟蹊径。' }
 };
 
-// 修道方向：起手好感加成 / 描述
+// 修道方向：起手好感加成 / 寿元加成 / 描述
 const DAOPATH_BONUS = {
-  '无情道':   { aff: { rongzhao: 6 }, note: '太上忘情，断情绝欲。容昭之冷，与你相契。' },
-  '逍遥道':   { aff: { muchangli: 6 }, note: '随心所欲，不羁于世。慕长离之姿，与你同路。' },
-  '苍生道':   { aff: { shenhuaizhou: 6 }, note: '心怀众生，温润如玉。沈怀舟之伪，与你同形。' },
-  '多情道':   { aff: { shenhuaizhou: 3, lihanyuan: 3, rongzhao: 3, muchangli: 3 }, note: '一念多情，难舍难断。你与四人皆有牵缠之缘。' },
-  '杀戮道':   { aff: { lihanyuan: 6 }, note: '以杀证道，剑出无悔。厉寒渊之血，与你同源。' },
-  '凡尘道':   { aff: {}, note: '不入大道，只问本心。无加成，亦无束缚。' }
+  '无情道':   { aff: { rongzhao: 6 }, life: 30,  note: '太上忘情，断情绝欲。容昭之冷，与你相契。寿元绵长，然心渐冷。' },
+  '逍遥道':   { aff: { muchangli: 6 }, life: 20,  note: '随心所欲，不羁于世。慕长离之姿，与你同路。寿元有损亦无悔。' },
+  '苍生道':   { aff: { shenhuaizhou: 6 }, life: 10, note: '心怀众生，温润如玉。沈怀舟之伪，与你同形。渡人渡己，寿元有赠。' },
+  '多情道':   { aff: { shenhuaizhou: 3, lihanyuan: 3, rongzhao: 3, muchangli: 3 }, life: -20, note: '一念多情，难舍难断。你与四人皆有牵缠之缘。情多伤寿，多情反薄命。' },
+  '杀戮道':   { aff: { lihanyuan: 6 }, life: -10, note: '以杀证道，剑出无悔。厉寒渊之血，与你同源。杀伐过重，寿元有损。' },
+  '凡尘道':   { aff: {}, life: 0, note: '不入大道，只问本心。无加成，亦无束缚。' }
 };
 
 // 主修方向：剑法倍率 / 灵力倍率 / 起手剑法 / 起手灵力 / 文案
 const MAINCULT_BONUS = {
-  '剑修': { swordMul: 1.6, lingliMul: 0.95, swordStart: 15, lingliStart: 0,  note: '以剑入道。剑法增益远胜他人，但灵力增长略缓。' },
-  '法修': { swordMul: 0.85, lingliMul: 1.35, swordStart: 0, lingliStart: 20, note: '以法为基。灵力深厚，剑法平平。' },
-  '丹修': { swordMul: 0.80, lingliMul: 1.10, swordStart: 0, lingliStart: 10, note: '以丹养道。灵力增长平稳，行有余力自调气血。' }
+  '剑修': { swordMul: 1.6,  lingliMul: 0.95, swordStart: 15, lingliStart: 0,  note: '以剑入道。剑法增益远胜他人，但灵力增长略缓。' },
+  '法修': { swordMul: 0.85, lingliMul: 1.35, swordStart: 0,  lingliStart: 20, note: '以法为基。灵力深厚，剑法平平。' },
+  '丹修': { swordMul: 0.80, lingliMul: 1.10, swordStart: 0,  lingliStart: 10, note: '以丹养道。灵力增长平稳，可自调气血，余力行辅修。' },
+  '体修': { swordMul: 1.20, lingliMul: 0.85, swordStart: 8,  lingliStart: 0,  note: '以体为炉。近身搏杀之能冠绝同阶，灵力偏弱。' },
+  '御兽': { swordMul: 0.90, lingliMul: 1.05, swordStart: 0,  lingliStart: 8,  note: '以驯御灵兽为战。人兽合力，攻守兼备。' }
+};
+
+// 辅修/生活职业（影响后期赚取灵石方式，与特定剧情挂钩）
+const SUBCULT_DESC = {
+  '采药': '识得百草，可于后山寻得珍稀药草换取灵石。',
+  '炼器': '粗通炉火，可修补法器，闲暇接外门炼器订单。',
+  '制符': '会画几张基础符箓，临战可应急。',
+  '驯兽': '懂得安抚灵兽，御兽派弟子另眼相看。',
+  '铭文': '能在法器上铭刻基础阵纹，提升品阶。'
+};
+
+// 出身背景（影响起手资源/骨龄/部分剧情）
+const ORIGIN_BONUS = {
+  '凡人国度':   { boneAge: 14, lifespan: 100, extraLingli: 0,  note: '凡间孤女，被执事顺手带回。无依无靠，亦无牵挂。' },
+  '没落世家':   { boneAge: 16, lifespan: 130, extraLingli: 10, note: '祖上曾为修士，家道中落。你带着半卷残谱入宗。' },
+  '大宗门弃徒': { boneAge: 22, lifespan: 90,  extraLingli: 25, note: '曾为别宗内门弟子，因故被逐。骨龄偏长，根基却深。' },
+  '偏僻散修':   { boneAge: 18, lifespan: 110, extraLingli: 5,  note: '师承山野散修，入门虽晚，见识却广。' }
 };
 
 // 计算当前身份下的最终灵力倍率（灵根 × 主修）
@@ -764,13 +805,30 @@ function getSwordMultiplier() {
   return (mc.swordMul || 1);
 }
 
-// 境界名称表
+// 境界名称表（1-17：练气1-9 / 筑基 / 金丹 / 元婴 / 渡劫 / 大乘 / 飞升）
 const REALM_NAMES = [
   '练气一层','练气二层','练气三层','练气四层','练气五层','练气六层',
-  '练气七层','练气八层','练气九层','筑基期','金丹期','元婴期'
+  '练气七层','练气八层','练气九层',
+  '筑基期','金丹期','元婴期','渡劫期','大乘期','飞升期'
 ];
-const REALM_LINGLI_MAX = [100,150,200,260,330,410,500,600,720,1000,1500,2500];
+const REALM_LINGLI_MAX = [100,150,200,260,330,410,500,600,720, 1000,1500,2500,4200,6800,12000];
 const SWORD_LEVELS = ['入门','熟练','小成','大成','剑意初显','剑心通明'];
+
+// 宗门弟子等级判定（依据境界）
+// 杂役弟子/外门弟子/内门弟子/真传弟子/太上长老
+function rankByRealm(realmLevel) {
+  if (realmLevel >= 15) return '太上长老';
+  if (realmLevel >= 13) return '真传弟子';
+  if (realmLevel >= 10) return '内门弟子';
+  if (realmLevel >= 5)  return '外门弟子';
+  return '杂役弟子';
+}
+// 寿元基础（随境界增长）
+function lifespanByRealm(realmLevel, base) {
+  // 筑基+200，金丹+500，元婴+1000，渡劫+3000，大乘+8000，飞升无尽
+  const bonus = [0,0,0,0,0,0,0,0,0, 200,500,1000,3000,8000,99999];
+  return base + bonus[realmLevel - 1];
+}
 
 // ==================== 好感度显示 ====================
 function updateAffectionUI() {
@@ -828,21 +886,40 @@ function addSwordArt(amount) {
 }
 
 function addYears(amount) {
-  state.cultivation.years += amount;
+  const c = state.cultivation;
+  c.years += amount;
+  // 骨龄随修为增长（外表年龄不变，除非突破筑基期可驻颜）
+  c.boneAge += amount;
+  // 寿元随修为流逝
+  c.lifespan -= amount;
+  if (c.lifespan <= 0) {
+    c.lifespan = 0;
+    // 寿元耗尽：触发大限结局（保留处理，后续可扩展）
+    showAffPopup('寿元将尽！');
+  }
   updateCultPanel();
 }
 
 function checkBreakthrough() {
   const c = state.cultivation;
   // 灵力满则突破
-  while (c.lingli >= c.lingliMax && c.realmLevel < 12) {
+  while (c.lingli >= c.lingliMax && c.realmLevel < REALM_NAMES.length) {
     c.lingli -= c.lingliMax;
     c.realmLevel++;
     c.realm = REALM_NAMES[c.realmLevel - 1];
     c.lingliMax = curLingliMax();
+    // 寿元随境界提升
+    c.lifespan = lifespanByRealm(c.realmLevel, c.lifespan);
+    // 弟子等级重判
+    c.discipleRank = rankByRealm(c.realmLevel);
     showAffPopup('境界突破：' + c.realm + '！');
+    showAffPopup('弟子等级：' + c.discipleRank);
     // 突破奖励：自由行动+1
     c.freeActions = Math.min(3, c.freeActions + 1);
+    // 筑基期及以上：外表年龄驻颜
+    if (c.realmLevel >= 10) {
+      c.appearAge = c.appearAge; // 保持不变
+    }
   }
 }
 
@@ -852,13 +929,22 @@ function applyIdentityBonus() {
   const lg = LINGGEN_BONUS[state.linggen] || LINGGEN_BONUS['伪灵根'];
   const mc = MAINCULT_BONUS[state.mainCult] || MAINCULT_BONUS['法修'];
   const dp = DAOPATH_BONUS[state.daoPath] || DAOPATH_BONUS['凡尘道'];
+  const og = ORIGIN_BONUS[state.origin] || ORIGIN_BONUS['凡人国度'];
 
-  // 起手灵力 / 剑法
+  // 出身影响骨龄/寿元
+  c.boneAge = og.boneAge;
+  c.appearAge = og.boneAge; // 初始外表=骨龄
+  c.lifespan = og.lifespan + (lg.life || 0) + (dp.life || 0);
+
+  // 起手灵力 / 剑法（含出身额外灵力）
   c.swordArt += (lg.swordStart || 0) + (mc.swordStart || 0);
-  c.lingli = Math.min(c.lingliMax, c.lingli + (lg.lingliStart || 0) + (mc.lingliStart || 0));
+  c.lingli = Math.min(c.lingliMax, c.lingli + (lg.lingliStart || 0) + (mc.lingliStart || 0) + (og.extraLingli || 0));
   // 灵力上限按灵根倍率重算
   c.lingliMax = curLingliMax();
   c.lingli = Math.min(c.lingli, c.lingliMax);
+
+  // 弟子等级判定（按当前境界）
+  c.discipleRank = rankByRealm(c.realmLevel);
 
   // 修道方向起手好感
   for (const k in (dp.aff || {})) {
@@ -869,9 +955,40 @@ function applyIdentityBonus() {
   const newLevel = Math.min(5, Math.floor(c.swordArt / 50));
   c.swordArtLevel = SWORD_LEVELS[newLevel];
 
+  // 主修/辅修赋予的本命法宝/杀手锏/弱点（基础）
+  applyCultEquipment();
+
   checkBreakthrough();
   updateAffectionUI();
   updateCultPanel();
+}
+
+// 根据主修/辅修赋予起手法器/杀手锏/弱点
+function applyCultEquipment() {
+  const weaponMap = {
+    '剑修': '一柄无名铁剑',
+    '法修': '半卷残破法诀',
+    '丹修': '一只药庐小鼎',
+    '体修': '一双铁木护腕',
+    '御兽': '一只雏雀灵宠'
+  };
+  const killerMap = {
+    '剑修': '濒死可激剑意一线',
+    '法修': '残诀可发一记禁咒',
+    '丹修': '怀中藏一枚续命丹',
+    '体修': '燃血可暴增三息之力',
+    '御兽': '雏雀可化形一瞬护主'
+  };
+  const weaknessMap = {
+    '剑修': '剑出无悔，易伤难愈',
+    '法修': '近身搏杀之力孱弱',
+    '丹修': '临阵反击之力不足',
+    '体修': '远攻之法拙劣',
+    '御兽': '雏雀失则心神俱碎'
+  };
+  state.weapon = weaponMap[state.mainCult] || '未得';
+  state.killer = killerMap[state.mainCult] || '未觉';
+  state.weakness = weaknessMap[state.mainCult] || '凡躯';
 }
 
 function updateCultPanel() {
@@ -885,6 +1002,14 @@ function updateCultPanel() {
   document.getElementById('cult-linggen').textContent = state.linggen;
   document.getElementById('cult-daopath').textContent = state.daoPath;
   document.getElementById('cult-maincult').textContent = state.mainCult;
+  document.getElementById('cult-subcult').textContent = state.subCult;
+  document.getElementById('cult-origin').textContent = state.origin;
+  document.getElementById('cult-rank').textContent = c.discipleRank;
+  document.getElementById('cult-boneage').textContent = c.boneAge + ' 岁（表 ' + c.appearAge + '）';
+  document.getElementById('cult-lifespan').textContent = (c.lifespan >= 99999 ? '无尽' : c.lifespan + ' 年');
+  document.getElementById('cult-weapon').textContent = state.weapon;
+  document.getElementById('cult-killer').textContent = state.killer;
+  document.getElementById('cult-weakness').textContent = state.weakness;
 }
 
 // 切换面板显隐
@@ -1192,9 +1317,11 @@ function place_market(cb) {
 function scene_prologue() {
   clearText();
   setChapterBg(1);
-  addNarration('昆仑仙宗，仙魔同源，立宗万年。');
-  addNarration('七峰并立，仙道四峰主修灵力，魔道两峰主修魔气。唯有东峰——仙魔同修，不偏不倚。');
-  addNarration('然而三百年前一场变故，东峰没落，沦为七峰之末。');
+  addNarration('天地分三界——仙、魔、妖。');
+  addNarration('昆仑仙宗立于仙界边沿，仙魔同源，立宗万年。');
+  addNarration('七峰并立：仙道四峰主修灵力，魔道两峰主修魔气，唯有东峰——仙魔同修，不偏不倚。');
+  addNarration('然三百年前一场变故，东峰没落，沦为七峰之末。');
+  addNarration('正道非正，魔道非恶，妖亦有情，仙亦有私。');
   addNarration('');
   addNarration('——你将作为一介凡人，踏入这卷残篇。');
   addNarration('');
@@ -1286,18 +1413,52 @@ function scene_prologue_maincult() {
   addNarration(`道已立：${state.daoPath}。`);
   addNarration('仙途漫漫，需择一术为根本。你主修——');
   addNarration('');
-  addNarration('（主修决定剑法与灵力的成长侧重，并赋予起手属性）');
+  addNarration('（主修决定剑法与灵力的成长侧重，并赋予起手属性与法器）');
 
   const options = Object.keys(MAINCULT_BONUS).map(mc => ({
     text: mc,
     result: MAINCULT_BONUS[mc].note,
     effect: () => { state.mainCult = mc; },
+    next: scene_prologue_subcult
+  }));
+  showChoices(options);
+}
+
+// 第⑤步：选择辅修/生活职业
+function scene_prologue_subcult() {
+  clearText();
+  addNarration(`主修已定：${state.mainCult}。`);
+  addNarration('修士之外，尚需谋生之术。你辅修——');
+  addNarration('');
+  addNarration('（辅修决定后期赚取灵石与采办资源的方式，影响特定剧情）');
+
+  const options = Object.keys(SUBCULT_DESC).map(sc => ({
+    text: sc,
+    result: SUBCULT_DESC[sc],
+    effect: () => { state.subCult = sc; },
+    next: scene_prologue_origin
+  }));
+  showChoices(options);
+}
+
+// 第⑥步：选择出身背景
+function scene_prologue_origin() {
+  clearText();
+  addNarration(`辅修已定：${state.subCult}。`);
+  addNarration('你从何处来？出身决定骨龄、寿元与起手资源。');
+  addNarration('');
+  addNarration('（出身影响骨龄/寿元/起手灵力，也关乎身世支线）');
+
+  const options = Object.keys(ORIGIN_BONUS).map(og => ({
+    text: og,
+    result: ORIGIN_BONUS[og].note,
+    effect: () => { state.origin = og; },
     next: scene_prologue_confirm
   }));
   showChoices(options);
 }
 
-// 第⑤步：身份确认
+// 第⑦步：身份确认
 function scene_prologue_confirm() {
   clearText();
   addNarration('——身份已成——');
@@ -1306,8 +1467,10 @@ function scene_prologue_confirm() {
   addNarration(`灵根：${state.linggen}`);
   addNarration(`道向：${state.daoPath}`);
   addNarration(`主修：${state.mainCult}`);
+  addNarration(`辅修：${state.subCult}`);
+  addNarration(`出身：${state.origin}`);
   addNarration('');
-  addNarration('（以上选择将影响你日后的修炼效率、好感倾向与剧情走向，确认后不可更改。）');
+  addNarration('（以上选择将影响你日后的修炼效率、好感倾向、资源获取与剧情走向，确认后不可更改。）');
 
   const container = document.getElementById('choices');
   container.innerHTML = '';
@@ -1331,6 +1494,8 @@ function scene_prologue_confirm() {
     state.linggen = '伪灵根';
     state.daoPath = '凡尘道';
     state.mainCult = '法修';
+    state.subCult = '采药';
+    state.origin = '凡人国度';
     scene_prologue_linggen();
   };
   container.appendChild(redoBtn);
@@ -1340,21 +1505,27 @@ function scene_prologue_confirm() {
 function scene_chapter1_intro() {
   clearText();
   setChapterBg(1);
-  addNarration(`你叫${state.playerName}，凡间孤女，被昆仑仙宗下山收徒的执事顺手带回。`);
+  // 出身文案
+  const originIntro = {
+    '凡人国度':   `你叫${state.playerName}，凡间孤女，被昆仑仙宗下山收徒的执事顺手带回。`,
+    '没落世家':   `你叫${state.playerName}，没落修仙世家之女，家道中落后带着半卷残谱入宗。`,
+    '大宗门弃徒': `你叫${state.playerName}，曾为别宗内门弟子，因故被逐，转投昆仑。`,
+    '偏僻散修':   `你叫${state.playerName}，师承山野散修，入门虽晚，见识却广。`
+  };
+  addNarration(originIntro[state.origin] || originIntro['凡人国度']);
   addNarration('测灵根那天，你伸出测灵石的手在抖。');
   // 根据所选灵根显示不同测灵石文案
   const lgText = {
-    '天灵根': '测灵石亮起一片金光，照得满堂皆惊。天灵根——万中无一。',
-    '异灵根': '测灵石亮起一抹异色，电光与黑气交缠。异灵根——主事者皱了皱眉。',
-    '双灵根': '测灵石亮起两道不同色的光。双灵根——中庸之资，不显不弱。',
-    '杂灵根': '测灵石亮起驳杂五色，光晕散乱。杂灵根——修速偏慢，根基却稳。',
-    '伪灵根': '测灵石亮了——很暗，很弱。伪灵根。仙道修炼速度极慢，几无结丹可能。'
+    '天灵根':   '测灵石亮起一片金光，照得满堂皆惊。天灵根——万中无一，结丹前无瓶颈。仙道四峰峰主同时起身。',
+    '真灵根':   '测灵石亮起两三种柔和的光晕。真灵根——修仙界中坚之资，主事者颔首。',
+    '变异灵根': '测灵石亮起一抹异色，电光与黑气交缠。变异灵根——主事者皱眉，魔道两峰峰主却同时抬眼。',
+    '双灵根':   '测灵石亮起两道不同色的光。双灵根——中庸之资，不显不弱。',
+    '杂灵根':   '测灵石亮起驳杂五色，光晕散乱。杂灵根——修速偏慢，根基却稳，少有人多看一眼。',
+    '伪灵根':   '测灵石亮了——很暗，很弱。伪灵根。仙道修炼速度极慢，几无结丹可能。'
   };
   addNarration(lgText[state.linggen] || lgText['伪灵根']);
   addNarration('');
-  addNarration('仙道四峰的峰主看了一眼，各有计较。');
-  addNarration('最后，你被分到了最冷清的东峰。');
-  addNarration('');
+  addNarration('按宗门规矩，你被定为杂役弟子，分到了最冷清的东峰。');
   addNarration('东峰之上，桃树成林，却无人打理。你走着走着，迷了路。');
   
   setTimeout(() => {
@@ -2578,9 +2749,18 @@ function restartGame() {
     linggen: '伪灵根',
     daoPath: '凡尘道',
     mainCult: '法修',
+    subCult: '采药',
+    origin: '凡人国度',
+    weapon: '未得',
+    killer: '未觉',
+    weakness: '凡躯',
     cultivation: {
+      boneAge: 14,
+      appearAge: 14,
+      lifespan: 120,
       realm: '练气一层',
       realmLevel: 1,
+      discipleRank: '杂役弟子',
       lingli: 0,
       lingliMax: 100,
       swordArt: 0,
