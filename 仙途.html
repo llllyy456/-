@@ -1209,6 +1209,10 @@ let state = {
   subCult: '采药',       // 辅修
   origin: '凡人孤女',    // 出身背景
   discipleType: '',      // 入门身份：personal 亲传 / registered 记名 / servant 杂役
+  // 终章自由修炼循环
+  roamRound: 0,              // 已历修行周期（每周期三年）
+  roamRoundStartAge: 0,      // 本周期开始时的修炼年数（用于补齐三年之期）
+  romanceResolved: {},       // 已作出抉择的男主：携手结局或斩断情丝后不再重复弹窗
   constitutions: [],     // 特殊体质（随机3个）
   // 身份卡：斗法设定
   weapon: '未得',        // 本命法宝
@@ -3800,6 +3804,9 @@ function restartGame() {
     subCult: '采药',
     origin: '凡人孤女',
     discipleType: '',
+    roamRound: 0,
+    roamRoundStartAge: 0,
+    romanceResolved: {},
     constitutions: [],
     weapon: '未得',
     killer: '未觉',
